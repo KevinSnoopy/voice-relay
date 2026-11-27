@@ -11,6 +11,17 @@ VoiceRelay 由两部分组成：
 
 > 这是一个**早期但真的能用**的版本：Mac 端协议、认证、本机识别、文字注入已跑通并有自动化测试；屏幕共享、BLE、iOS 真机仍在验收中。已知限制见[项目状态](#项目状态)。
 
+## 截图
+
+<p align="center">
+  <img src="docs/screenshots/01-welcome.png" width="200" alt="欢迎页">
+  <img src="docs/screenshots/02-permissions.png" width="200" alt="权限页">
+  <img src="docs/screenshots/03-connect.png" width="200" alt="连接 Mac">
+  <img src="docs/screenshots/04-home.png" width="200" alt="已连接主界面">
+</p>
+
+> Android 模拟器实拍。不同机型的系统栏、字体与刘海区域会略有差异。
+
 ---
 
 ## 下载

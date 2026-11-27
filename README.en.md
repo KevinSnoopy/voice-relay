@@ -9,6 +9,17 @@ VoiceRelay is two apps:
 - **macOS menu bar app** (SwiftUI): receives audio, transcribes locally with sherpa-onnx + SenseVoice, injects text at the caret, and can switch apps/windows. Screen sharing is available as an experimental read-only feature.
 - **Mobile app** (Flutter): hold-to-talk, control keys, status; Bonjour discovery, QR pairing, optional BLE fallback.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/01-welcome.png" width="200" alt="Welcome">
+  <img src="docs/screenshots/02-permissions.png" width="200" alt="Permissions">
+  <img src="docs/screenshots/03-connect.png" width="200" alt="Connect to Mac">
+  <img src="docs/screenshots/04-home.png" width="200" alt="Connected home screen">
+</p>
+
+> Captured on the Android emulator. System bars and fonts vary slightly by device.
+
 > Early but usable. Protocol, authentication, local ASR and text injection are implemented and covered by automated tests. BLE, screen playback and iOS device builds still need real-hardware validation.
 
 ## Download
