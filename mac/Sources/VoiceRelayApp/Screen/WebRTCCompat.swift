@@ -1,6 +1,8 @@
 import Foundation
 
-#if !canImport(WebRTC) && canImport(LiveKitWebRTC)
+#if canImport(WebRTC)
+import WebRTC
+#elseif canImport(LiveKitWebRTC)
 import LiveKitWebRTC
 
 // LiveKit's prebuilt WebRTC XCFramework is the only WebRTC build published for
@@ -30,3 +32,16 @@ typealias RTCVideoFrame = LKRTCVideoFrame
 typealias RTCVideoSource = LKRTCVideoSource
 typealias RTCVideoTrack = LKRTCVideoTrack
 #endif
+
+// Google's prebuilt WebRTC returns a non-optional `RTCPeerConnection`, while
+// LiveKit's arm64 build returns an optional. Normalize the return type here so
+// callers can use one `guard let` on both architectures.
+extension RTCPeerConnectionFactory {
+    func makePeerConnection(
+        with configuration: RTCConfiguration,
+        constraints: RTCMediaConstraints,
+        delegate: RTCPeerConnectionDelegate?
+    ) -> RTCPeerConnection? {
+        peerConnection(with: configuration, constraints: constraints, delegate: delegate)
+    }
+}
