@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>D-01 菜单栏图标四态 · VoiceRelay</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --label: #1d1d1f;
+    --label-2: rgba(60, 60, 67, 0.6);
+    --label-3: rgba(60, 60, 67, 0.36);
+    --separator: rgba(60, 60, 67, 0.16);
+    --canvas: #ececea;
+    --window: #ffffff;
+    --panel: #f5f5f4;
+    --accent: #0a6cff;
+    --accent-soft: rgba(10, 108, 255, 0.12);
+    --yellow: #b45309;
+    --yellow-bg: rgba(255, 204, 0, 0.16);
+    --green: #1c8f4a;
+    --red: #d32f2f;
+    --menubar: rgba(246, 246, 246, 0.94);
+    --card-ring: rgba(0, 0, 0, 0.07);
+    --wallpaper: linear-gradient(140deg, #d9e4f0 0%, #e9dfe8 45%, #dbe6dd 100%);
+  }
+  html.dark {
+    --label: #f2f2f7;
+    --label-2: rgba(235, 235, 245, 0.62);
+    --label-3: rgba(235, 235, 245, 0.34);
+    --separator: rgba(235, 235, 245, 0.16);
+    --canvas: #131315;
+    --window: #1e1e20;
+    --panel: #262629;
+    --accent: #3d9bff;
+    --accent-soft: rgba(61, 155, 255, 0.18);
+    --yellow: #f0b429;
+    --yellow-bg: rgba(240, 180, 41, 0.14);
+    --green: #43c476;
+    --red: #ff6b60;
+    --menubar: rgba(32, 32, 35, 0.94);
+    --card-ring: rgba(255, 255, 255, 0.09);
+    --wallpaper: linear-gradient(140deg, #1b2430 0%, #2a1f2c 45%, #18241f 100%);
+  }
+  body {
+    background: var(--canvas);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .t-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .t-body { font-size: 13px; line-height: 1.5; }
+  .t-caption { font-size: 11px; line-height: 1.4; }
+  .muted { color: var(--label-2); }
+  .faint { color: var(--label-3); }
+  .hair-t { border-top: 0.5px solid var(--separator); }
+  .hair-b { border-bottom: 0.5px solid var(--separator); }
+  .frame-card { background: var(--window); border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px var(--card-ring); }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .btn-secondary { background: var(--window); color: var(--label); border: 0.5px solid var(--separator); border-radius: 8px; font-size: 13px; }
+  .seg { background: var(--panel); border-radius: 8px; padding: 2px; display: inline-flex; }
+  .seg-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; color: var(--label-2); }
+  .seg-item.on { background: var(--window); color: var(--label); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .badge { font-size: 11px; line-height: 1; display: inline-flex; align-items: center; gap: 4px; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .menubar-strip { background: var(--menubar); backdrop-filter: blur(18px); color: var(--label); border-bottom: 0.5px solid var(--separator); }
+  .wallpaper { background: var(--wallpaper); }
+
+  /* 菜单栏图标：Template Image 抽象，随 --label 反色 */
+  .glyph { color: var(--label); display: inline-flex; align-items: center; justify-content: center; transition: color .2s ease, opacity .2s ease; }
+  .glyph-unconnected span { display:block; width:14px; height:14px; border-radius:9999px; border:1.5px solid var(--label); }
+  .glyph-connected span { display:block; width:14px; height:14px; border-radius:9999px; background: var(--label); }
+  .glyph-recording { display:inline-flex; align-items:center; gap:2.5px; height:16px; }
+  .glyph-recording i { width:2.5px; border-radius:2px; background: var(--label); transition: height .2s ease; }
+  .glyph-recording i:nth-child(1) { height:8px; }
+  .glyph-recording i:nth-child(2) { height:15px; }
+  .glyph-recording i:nth-child(3) { height:10px; }
+  .glyph-recording.is-live i:nth-child(1) { animation: lvl1 .9s ease-in-out infinite; }
+  .glyph-recording.is-live i:nth-child(2) { animation: lvl2 .7s ease-in-out infinite; }
+  .glyph-recording.is-live i:nth-child(3) { animation: lvl3 .8s ease-in-out infinite; }
+  @keyframes lvl1 { 0%,100% { height:6px } 50% { height:14px } }
+  @keyframes lvl2 { 0%,100% { height:15px } 50% { height:7px } }
+  @keyframes lvl3 { 0%,100% { height:9px } 50% { height:16px } }
+  .glyph-anomaly { position: relative; width: 18px; height: 18px; display:inline-flex; align-items:center; justify-content:center; }
+  .glyph-anomaly .ring { width:12px; height:12px; border-radius:9999px; border:1.5px solid var(--label); }
+  .glyph-anomaly .ex { position:absolute; right:-2px; bottom:-1px; width:10px; height:10px; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-size:7px; font-weight:700; line-height:1; background: var(--label); color: var(--window); }
+
+  .spec-row { display:grid; grid-template-columns: 1fr 1.6fr; gap: 16px; padding: 12px 0; }
+  ::-webkit-scrollbar { display: none; }
+  .scale-box { border: 1px dashed var(--label-3); border-radius: 6px; }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-[1240px] mx-auto px-8 py-8">
+<nav class="flex items-center justify-between mb-6">
+<a class="t-caption muted flex items-center gap-1 hover:opacity-70" href="home.html">
+<iconify-icon icon="solar:alt-arrow-left-linear" style="font-size:13px"></iconify-icon> 画板索引
+      </a>
+<div class="flex items-center gap-3">
+<span class="badge px-2 py-1 rounded-full shrink-0" style="background: var(--yellow-bg); color: var(--yellow); box-shadow: inset 0 0 0 0.5px var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:12px"></iconify-icon>演示数据 · 非实时状态
+</span>
+<div class="seg" id="appearanceSeg">
+<button class="seg-item on" data-appearance="light" type="button">浅色</button>
+<button class="seg-item" data-appearance="dark" type="button">深色</button>
+</div>
+<span class="t-caption faint mono">D-01</span>
+</div>
+</nav>
+<header class="mb-8">
+<h1 class="text-[22px] font-semibold tracking-tight">菜单栏图标四态</h1>
+<p class="t-body muted mt-1 max-w-[720px]">图标用 Template Image，随系统栏颜色自动反色。此处仅切换预设图标，不读取真实连接或权限；状态切换设计值为 200 ms。</p>
+</header>
+<!-- 状态实验室 -->
+<div class="grid grid-cols-[1fr_340px] gap-5 mb-6">
+<section class="frame-card overflow-hidden">
+<div class="px-5 pt-5 pb-3 flex items-center justify-between hair-b">
+<div>
+<h2 class="t-title">菜单栏实景 · 浅色 / 深色自动反色</h2>
+<p class="t-caption muted mt-1">右侧图标区就是系统菜单栏中 18 × 18 pt 的实际占位</p>
+</div>
+<span class="badge px-2 py-1 rounded-full" style="background: var(--accent-soft); color: var(--accent)">
+<iconify-icon icon="solar:eye-bold" style="font-size:12px"></iconify-icon> Template
+          </span>
+</div>
+<!-- 浅色菜单栏 -->
+<div class="px-5 pt-5">
+<div class="t-caption muted mb-2 flex items-center gap-2">
+<iconify-icon icon="solar:sun-2-bold" style="font-size:12px"></iconify-icon> 浅色外观
+          </div>
+<div class="rounded-t-[10px] overflow-hidden" style="box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="menubar-strip h-[30px] flex items-center justify-between px-3" style="background: rgba(246,246,246,0.96)">
+<div class="flex items-center gap-4 text-[12px]" style="color:#1d1d1f">
+<span class="font-semibold">Finder</span>
+<span style="opacity:.85">文件</span>
+<span style="opacity:.85">编辑</span>
+<span style="opacity:.85">显示</span>
+<span style="opacity:.85">窗口</span>
+<span style="opacity:.85">帮助</span>
+</div>
+<div class="flex items-center gap-3" style="color:#1d1d1f">
+<span class="badge opacity-80" style="font-size:12px">􀍟</span>
+<span class="badge px-1" style="font-size:12px">􀊫</span>
+<span class="inline-flex items-center justify-center" id="lightSlot" style="width:20px;height:18px"></span>
+<span class="badge opacity-80" style="font-size:12px">􀒯</span>
+<span class="t-caption" style="opacity:.9">周五 14:32</span>
+</div>
+</div>
+<div class="wallpaper h-[76px]"></div>
+</div>
+</div>
+<!-- 深色菜单栏 -->
+<div class="px-5 pt-5 pb-5">
+<div class="t-caption muted mb-2 flex items-center gap-2">
+<iconify-icon icon="solar:moon-bold" style="font-size:12px"></iconify-icon> 深色外观
+          </div>
+<div class="rounded-b-[10px] overflow-hidden" style="box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="h-[30px] flex items-center justify-between px-3" style="background: rgba(38,38,40,0.96); color:#f2f2f7">
+<div class="flex items-center gap-4 text-[12px]">
+<span class="font-semibold">Finder</span>
+<span style="opacity:.8">文件</span>
+<span style="opacity:.8">编辑</span>
+<span style="opacity:.8">显示</span>
+<span style="opacity:.8">窗口</span>
+<span style="opacity:.8">帮助</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="badge opacity-80" style="font-size:12px">􀍟</span>
+<span class="badge px-1" style="font-size:12px">􀊫</span>
+<span class="inline-flex items-center justify-center" id="darkSlot" style="width:20px;height:18px"></span>
+<span class="badge opacity-80" style="font-size:12px">􀒯</span>
+<span class="t-caption" style="opacity:.9">周五 14:32</span>
+</div>
+</div>
+<div class="wallpaper h-[76px]" style="filter: saturate(.7)"></div>
+</div>
+</div>
+</section>
+<!-- 状态控制 -->
+<aside class="frame-card p-5">
+<h2 class="t-title">状态切换</h2>
+<p class="t-caption muted mt-1">点选任一预设状态，上方两套菜单栏同步演示；不读取真实连接、权限或录音。</p>
+<div class="mt-4 space-y-2" id="stateList">
+<button class="state-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-left" data-state="unconnected" style="box-shadow: 0 0 0 0.5px var(--card-ring)" type="button">
+<span class="w-[22px] flex justify-center"><span class="glyph glyph-unconnected"><span></span></span></span>
+<span class="flex-1">
+<span class="t-body block">未连接</span>
+<span class="t-caption muted">无会话，空心圆环</span>
+</span>
+</button>
+<button class="state-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-left" data-state="connected" style="box-shadow: 0 0 0 0.5px var(--card-ring)" type="button">
+<span class="w-[22px] flex justify-center"><span class="glyph glyph-connected"><span></span></span></span>
+<span class="flex-1">
+<span class="t-body block">已连接</span>
+<span class="t-caption muted">握手完成、空闲，实心圆环</span>
+</span>
+</button>
+<button class="state-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-left" data-state="recording" style="box-shadow: 0 0 0 0.5px var(--card-ring)" type="button">
+<span class="w-[22px] flex justify-center"><span class="glyph glyph-recording"><i></i><i></i><i></i></span></span>
+<span class="flex-1">
+<span class="t-body block">收音中</span>
+<span class="t-caption muted">三条竖线，正在接收音频</span>
+</span>
+</button>
+<button class="state-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-left" data-state="anomaly" style="box-shadow: 0 0 0 0.5px var(--card-ring)" type="button">
+<span class="w-[22px] flex justify-center"><span class="glyph glyph-anomaly"><span class="ring"></span><span class="ex">!</span></span></span>
+<span class="flex-1">
+<span class="t-body block">异常</span>
+<span class="t-caption muted">权限缺失 / 后端不可用 / 连续失败</span>
+</span>
+</button>
+</div>
+<div class="hair-t mt-4 pt-4">
+<div class="flex items-center justify-between mb-2">
+<span class="t-caption muted">过渡设计值</span>
+<span class="t-caption mono" id="switchCost" style="color: var(--accent)">200 ms</span>
+</div>
+<div class="h-[3px] rounded-full overflow-hidden" style="background: var(--panel)">
+<div class="h-full rounded-full" id="costBar" style="width:66%;background: var(--accent); transition: width .2s ease"></div>
+</div>
+<p class="t-caption faint mt-2">仅展示设计值，不是真实性能测量；目标 &lt; 300 ms。</p>
+</div>
+<div class="mt-4 rounded-[8px] p-3" style="background: var(--yellow-bg)">
+<p class="t-caption flex items-start gap-2" style="color: var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:13px;margin-top:1px"></iconify-icon>
+<span>异常态点击图标直接打开设置 → 权限页，不经过弹窗。</span>
+</p>
+</div>
+</aside>
+</div>
+<!-- 四态规格 -->
+<section class="frame-card p-5 mb-6">
+<div class="flex items-baseline justify-between mb-1">
+<h2 class="t-title">四态规格</h2>
+<span class="t-caption faint">尺寸 18 × 18 pt（@2x 36）· 留 2 pt 视觉边距</span>
+</div>
+<div class="mt-3">
+<div class="spec-row t-caption hair-b muted">
+<span>状态 / 图形</span>
+<span>触发条件与行为</span>
+</div>
+<div class="spec-row hair-b">
+<div class="flex items-center gap-3">
+<span class="w-[22px] flex justify-center glyph glyph-unconnected"><span></span></span>
+<span class="t-body">未连接 · 空心圆环</span>
+</div>
+<p class="t-body muted">无会话。菜单栏图标单击展开弹窗，显示「等待手机连接」与配对码入口。</p>
+</div>
+<div class="spec-row hair-b">
+<div class="flex items-center gap-3">
+<span class="w-[22px] flex justify-center glyph glyph-connected"><span></span></span>
+<span class="t-body">已连接 · 实心圆环</span>
+</div>
+<p class="t-body muted">握手完成、空闲。收音开始即切为三条竖线，松手到空闲的切换须 &lt; 300 ms。</p>
+</div>
+<div class="spec-row hair-b">
+<div class="flex items-center gap-3">
+<span class="w-[22px] flex justify-center glyph glyph-recording"><i></i><i></i><i></i></span>
+<span class="t-body">收音中 · 三条竖线</span>
+</div>
+<p class="t-body muted">正在接收音频，竖线跳动为可选装饰。关闭动态效果时降级为静态三线。</p>
+</div>
+<div class="spec-row">
+<div class="flex items-center gap-3">
+<span class="w-[22px] flex justify-center"><span class="glyph glyph-anomaly"><span class="ring"></span><span class="ex">!</span></span></span>
+<span class="t-body">异常 · 圆环 + 感叹号</span>
+</div>
+<div>
+<p class="t-body muted">权限缺失、后端不可用或连续失败 3 次。点击直接进入设置 → 权限，跳过弹窗。</p>
+<a class="badge mt-2" href="settings.html#permission" style="color: var(--accent)">
+              去权限页 <iconify-icon icon="solar:arrow-right-linear" style="font-size:12px"></iconify-icon>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- 尺寸标注与深浅对比 -->
+<div class="grid grid-cols-2 gap-5">
+<section class="frame-card p-5">
+<h2 class="t-title">尺寸与安全区</h2>
+<p class="t-caption muted mt-1">18 × 18 pt，四周留 2 pt，图形实际占 14 × 14 pt。</p>
+<div class="mt-4 flex items-center gap-8">
+<div class="scale-box p-4 relative flex items-center justify-center" style="width:120px;height:120px">
+<span class="t-caption faint absolute top-1 left-2 mono">18pt</span>
+<span class="t-caption faint absolute bottom-1 right-2 mono">14pt</span>
+<span class="rounded-[3px] p-[3px]" style="background: var(--accent-soft); outline: 0.5px dashed var(--accent)">
+<span class="rounded-[3px] flex items-center justify-center" style="width:42px;height:42px;background: var(--label); color: var(--window); font-size:22px">􀫊</span>
+</span>
+</div>
+<div class="space-y-2 flex-1">
+<div class="flex items-center justify-between"><span class="t-caption muted">Template Image</span><span class="t-caption mono">是</span></div>
+<div class="flex items-center justify-between"><span class="t-caption muted">状态过渡</span><span class="t-caption mono">200 ms</span></div>
+<div class="flex items-center justify-between"><span class="t-caption muted">多显示器</span><span class="t-caption mono">跟随鼠标所在屏</span></div>
+<div class="flex items-center justify-between"><span class="t-caption muted">Dock 图标</span><span class="t-caption mono">无</span></div>
+</div>
+</div>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">验收：浅 / 深色对比度</h2>
+<p class="t-caption muted mt-1">同一图形在两种外观下均由系统反色，无需单独提供深色资源。</p>
+<div class="mt-4 grid grid-cols-2 gap-3">
+<div class="rounded-[8px] p-4 flex flex-col items-center gap-3" style="background:#f2f2f2; color:#1d1d1f">
+<span class="bg-white rounded-[6px] w-full flex justify-center py-2"><span class="glyph glyph-connected" style="color:#1d1d1f"><span></span></span></span>
+<span class="t-caption" style="color:#6b6b70">浅色 · 实心圆环</span>
+</div>
+<div class="rounded-[8px] p-4 flex flex-col items-center gap-3" style="background:#2b2b2e; color:#f2f2f7">
+<span class="rounded-[6px] w-full flex justify-center py-2" style="background:#1f1f22"><span class="glyph glyph-anomaly" style="color:#f2f2f7"><span class="ring"></span><span class="ex" style="background:#f2f2f7;color:#1f1f22">!</span></span></span>
+<span class="t-caption" style="color:#a9a9b0">深色 · 异常态</span>
+</div>
+</div>
+<div class="hair-t mt-4 pt-3 flex items-center justify-between">
+<span class="t-caption muted">对比度检查</span>
+<span class="badge" style="color: var(--green)"><iconify-icon icon="solar:check-circle-bold" style="font-size:13px"></iconify-icon> 通过</span>
+</div>
+</section>
+</div>
+<footer class="hair-t mt-8 pt-5 flex items-center justify-between t-caption faint">
+<span>下一块画板：<a class="hover:opacity-70" href="popover.html" style="color: var(--accent)">D-02 弹窗 · 已连接 →</a></span>
+<span class="mono">200 ms transition · Template Image</span>
+</footer>
+</div>
+<script>
+  const root = document.documentElement;
+  const segButtons = document.querySelectorAll('#appearanceSeg [data-appearance]');
+  const lightSlot = document.getElementById('lightSlot');
+  const darkSlot = document.getElementById('darkSlot');
+  const stateList = document.getElementById('stateList');
+  const costEl = document.getElementById('switchCost');
+  const costBar = document.getElementById('costBar');
+
+  function glyphMarkup(state) {
+    if (state === 'unconnected') {
+      return '<span class="glyph glyph-unconnected"><span></span></span>';
+    }
+    if (state === 'connected') {
+      return '<span class="glyph glyph-connected"><span></span></span>';
+    }
+    if (state === 'recording') {
+      return '<span class="glyph glyph-recording is-live"><i></i><i></i><i></i></span>';
+    }
+    return '<span class="glyph glyph-anomaly"><span class="ring"></span><span class="ex">!</span></span>';
+  }
+
+  function renderState(state) {
+    lightSlot.innerHTML = glyphMarkup(state);
+    darkSlot.innerHTML = glyphMarkup(state);
+    const adaptive = lightSlot.firstElementChild;
+    if (adaptive) adaptive.style.color = '#1d1d1f';
+    const adaptiveDark = darkSlot.firstElementChild;
+    if (adaptiveDark) adaptiveDark.style.color = '#f2f2f7';
+    const exLight = lightSlot.querySelector('.ex');
+    if (exLight) { exLight.style.background = '#1d1d1f'; exLight.style.color = '#f6f6f6'; }
+    const exDark = darkSlot.querySelector('.ex');
+    if (exDark) { exDark.style.background = '#f2f2f7'; exDark.style.color = '#26262a'; }
+
+    document.querySelectorAll('.state-btn').forEach(function (btn) {
+      const active = btn.getAttribute('data-state') === state;
+      btn.style.background = active ? 'var(--accent-soft)' : 'transparent';
+      btn.style.boxShadow = active ? '0 0 0 1px var(--accent)' : '0 0 0 0.5px var(--card-ring)';
+    });
+  }
+
+  function markSwitch() {
+    costEl.textContent = '200 ms';
+    costBar.style.width = '66%';
+  }
+
+  stateList.addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-state]');
+    if (!btn) return;
+    renderState(btn.getAttribute('data-state'));
+    markSwitch();
+  });
+
+  function applyAppearance(mode) {
+    if (mode === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    segButtons.forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-appearance') === mode);
+    });
+    try { localStorage.setItem('vr-appearance', mode); } catch (e) {}
+  }
+
+  segButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyAppearance(btn.getAttribute('data-appearance'));
+    });
+  });
+
+  let saved = 'system';
+  try { saved = localStorage.getItem('vr-appearance') || 'system'; } catch (e) {}
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyAppearance(saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light'));
+  renderState('connected');
+  markSwitch();
+</script>
+</body>
+</html>

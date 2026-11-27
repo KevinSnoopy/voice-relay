@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>D-02 / D-03 / D-04 弹窗三态 · VoiceRelay</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --label: #1d1d1f;
+    --label-2: rgba(60, 60, 67, 0.6);
+    --label-3: rgba(60, 60, 67, 0.36);
+    --separator: rgba(60, 60, 67, 0.16);
+    --canvas: #ececea;
+    --window: #ffffff;
+    --panel: #f5f5f4;
+    --accent: #0a6cff;
+    --accent-soft: rgba(10, 108, 255, 0.12);
+    --yellow: #b45309;
+    --yellow-bg: rgba(255, 204, 0, 0.18);
+    --green: #1c8f4a;
+    --red: #d32f2f;
+    --card-ring: rgba(0, 0, 0, 0.07);
+    --wallpaper: linear-gradient(140deg, #ccd8e8 0%, #e6d9e2 50%, #d3e2d6 100%);
+  }
+  html.dark {
+    --label: #f2f2f7;
+    --label-2: rgba(235, 235, 245, 0.62);
+    --label-3: rgba(235, 235, 245, 0.34);
+    --separator: rgba(235, 235, 245, 0.16);
+    --canvas: #131315;
+    --window: #1e1e20;
+    --panel: #262629;
+    --accent: #3d9bff;
+    --accent-soft: rgba(61, 155, 255, 0.18);
+    --yellow: #f0b429;
+    --yellow-bg: rgba(240, 180, 41, 0.14);
+    --green: #43c476;
+    --red: #ff6b60;
+    --card-ring: rgba(255, 255, 255, 0.09);
+    --wallpaper: linear-gradient(140deg, #1a2230 0%, #2b2029 50%, #17231d 100%);
+  }
+  body {
+    background: var(--canvas);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .t-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .t-body { font-size: 13px; line-height: 1.5; }
+  .t-caption { font-size: 11px; line-height: 1.4; }
+  .muted { color: var(--label-2); }
+  .faint { color: var(--label-3); }
+  .hair-t { border-top: 0.5px solid var(--separator); }
+  .hair-b { border-bottom: 0.5px solid var(--separator); }
+  .frame-card { background: var(--window); border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px var(--card-ring); }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .btn-secondary { background: var(--window); color: var(--label); border: 0.5px solid var(--separator); border-radius: 8px; font-size: 13px; }
+  .seg { background: var(--panel); border-radius: 8px; padding: 2px; display: inline-flex; }
+  .seg-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; color: var(--label-2); }
+  .seg-item.on { background: var(--window); color: var(--label); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .badge { font-size: 11px; line-height: 1; display: inline-flex; align-items: center; gap: 4px; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .wallpaper { background: var(--wallpaper); }
+  .popover {
+    width: 320px; height: 420px; border-radius: 12px; background: var(--window);
+    box-shadow: 0 18px 48px rgba(0,0,0,0.26), 0 0 0 0.5px var(--card-ring);
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 9999px; transition: background .2s ease; }
+  .lvl-bar { width: 3px; border-radius: 2px; background: var(--label-3); transition: height .12s linear, background .2s ease; }
+  .rec-bar { background: var(--red); }
+  .recent-item { border-radius: 8px; transition: background .15s ease; cursor: pointer; }
+  .recent-item:hover { background: var(--panel); }
+  .recent-item p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+  .ctx-menu { position: absolute; z-index: 40; min-width: 132px; border-radius: 8px; background: var(--window); padding: 4px; box-shadow: 0 10px 28px rgba(0,0,0,0.24), 0 0 0 0.5px var(--card-ring); }
+  .ctx-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border-radius: 5px; font-size: 12px; color: var(--label); text-align: left; }
+  .ctx-item:hover { background: var(--accent); color: #fff; }
+  .ctx-sep { height: 0.5px; background: var(--separator); margin: 4px 4px; }
+  .hide { display: none !important; }
+  ::-webkit-scrollbar { display: none; }
+  .status-row-btn:hover { background: var(--panel); }
+  .fade-in { animation: fadeIn .18s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-[1240px] mx-auto px-8 py-8">
+<nav class="flex items-center justify-between mb-6">
+<a class="t-caption muted flex items-center gap-1 hover:opacity-70" href="home.html">
+<iconify-icon icon="solar:alt-arrow-left-linear" style="font-size:13px"></iconify-icon> 画板索引
+      </a>
+<div class="flex items-center gap-3">
+<span class="badge px-2 py-1 rounded-full shrink-0" style="background: var(--yellow-bg); color: var(--yellow); box-shadow: inset 0 0 0 0.5px var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:12px"></iconify-icon>演示数据 · 非实时状态
+</span>
+<div class="seg" id="appearanceSeg">
+<button class="seg-item on" data-appearance="light" type="button">浅色</button>
+<button class="seg-item" data-appearance="dark" type="button">深色</button>
+</div>
+<span class="t-caption faint mono">D-02 / D-03 / D-04</span>
+</div>
+</nav>
+<header class="mb-7">
+<h1 class="text-[22px] font-semibold tracking-tight">弹窗三态 · 已连接 / 收音中 / 未连接</h1>
+<p class="t-body muted mt-1 max-w-[760px]">320 × 420，圆角 12，无标题栏。连接、最近文本和电平均为演示，不连接手机、麦克风或系统；右侧可切换预设状态与后端 A/B。</p>
+</header>
+<div class="grid grid-cols-[400px_1fr] gap-6 items-start">
+<!-- 桌面模拟区 -->
+<section class="frame-card p-5">
+<p class="t-caption faint mb-3">左侧连接、最近文本与电平均为预设演示，不连接手机、麦克风或系统。</p>
+<div class="rounded-[10px] wallpaper relative h-[560px] overflow-hidden flex flex-col">
+<!-- 菜单栏 -->
+<div class="h-[26px] flex items-center justify-between px-3 shrink-0" style="background: var(--window); color: var(--label); border-bottom: 0.5px solid var(--separator)">
+<span class="t-caption font-semibold">Finder</span>
+<div class="flex items-center gap-2">
+<span class="t-caption faint">􀊫</span>
+<span class="inline-flex items-center justify-center" id="menuGlyph" style="width:16px;height:16px"></span>
+<span class="t-caption muted">周五 14:32</span>
+</div>
+</div>
+<!-- 弹窗悬浮 -->
+<div class="absolute top-[34px] right-3 z-30">
+<div class="popover" id="popover">
+<div class="hide px-3 py-[10px] items-center gap-2 shrink-0" id="banner" style="background: var(--yellow-bg); border-bottom: 0.5px solid var(--separator)">
+<iconify-icon icon="solar:danger-triangle-bold" style="font-size:13px;color:var(--yellow)"></iconify-icon>
+<span class="t-caption flex-1" style="color: var(--yellow)">需要授权才能使用</span>
+<a class="t-caption px-2 py-[3px] rounded-[6px]" href="settings.html#permission" style="background: var(--yellow); color: #fff">去授权</a>
+</div>
+<button class="status-row-btn w-full h-[44px] px-3 flex items-center gap-2 text-left shrink-0" id="statusRow" type="button">
+<span class="status-dot" id="statusDot" style="background: var(--green)"></span>
+<span class="flex-1 min-w-0">
+<span class="t-body font-medium block leading-tight" id="statusTitle">已连接</span>
+<span class="t-caption muted block leading-tight mt-[1px]" id="statusSub">Kevin 的 Mac · 本地识别</span>
+</span>
+<iconify-icon icon="solar:alt-arrow-down-linear" id="statusChevron" style="font-size:13px;color:var(--label-3);transition:transform .2s ease"></iconify-icon>
+</button>
+<div class="hide px-3 pb-3 shrink-0 max-h-[86px] overflow-y-auto" id="statusDetail" style="background: var(--panel); border-top: 0.5px solid var(--separator)">
+<div class="pt-2 space-y-[6px]">
+<div class="flex justify-between t-caption"><span class="muted">连接通道（演示）</span><span>局域网 · 192.168.1.24</span></div>
+<div class="flex justify-between t-caption"><span class="muted">延迟（演示）</span><span>18 ms</span></div>
+<div class="flex justify-between t-caption"><span class="muted">识别后端</span><span id="detailBackend">A · 本地</span></div>
+<div class="flex justify-between t-caption"><span class="muted">模型（演示）</span><span>SenseVoice Small · 已加载</span></div>
+</div>
+</div>
+<div class="h-[72px] shrink-0 flex flex-col justify-center px-3">
+<div class="hide h-[32px] items-end justify-center gap-[2px]" id="levelLive">
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+<i class="lvl-bar" style="height:2px"></i>
+</div>
+<div class="h-[32px] flex items-center justify-center" id="levelIdle">
+<span style="display:block;width:100%;height:2px;border-radius:2px;background:var(--separator)"></span>
+</div>
+<div class="t-caption faint text-center mt-1" id="levelHint">演示提示：按住手机按钮，说完松手</div>
+</div>
+<div class="flex-1 min-h-0 px-3 flex flex-col hair-t">
+<div class="flex items-center justify-between pt-[10px] pb-1">
+<span class="t-caption muted font-medium">最近（演示）</span>
+<span class="t-caption faint">最多 3 条示例</span>
+</div>
+<div class="space-y-[2px] overflow-y-auto flex-1 min-h-0 pb-2" id="recentList"></div>
+</div>
+<div class="h-[40px] px-3 flex items-center justify-between hair-t shrink-0">
+<div class="flex items-center gap-1">
+<span class="t-caption muted">手机（演示）</span>
+<span class="status-dot" id="phoneDot" style="width:6px;height:6px;background:var(--green)"></span>
+<span class="t-caption" id="phoneText">已连接</span>
+</div>
+<div class="flex items-center gap-1 relative">
+<span class="t-caption muted">后端 · 演示</span>
+<button class="t-caption px-1 py-[2px] rounded-[5px] flex items-center gap-1 hover:opacity-70" id="backendBtn" style="color: var(--label)" type="button">
+<span id="backendLabel">A · 本地</span>
+<iconify-icon icon="solar:alt-arrow-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+</div>
+</div>
+<div class="h-[44px] px-3 flex items-center justify-between hair-t shrink-0">
+<a class="t-body px-2 py-1 rounded-[6px] hover:opacity-70" href="settings.html" style="color: var(--accent)">设置…</a>
+<button class="t-body px-2 py-1 rounded-[6px] hover:opacity-70" id="quitBtn" style="color: var(--label)" type="button">退出</button>
+</div>
+<div class="hide absolute right-3 bottom-[92px] w-[212px] rounded-[8px] p-1" id="backendMenu" style="background: var(--window); box-shadow: 0 12px 30px rgba(0,0,0,0.22), 0 0 0 0.5px var(--card-ring); z-index: 50">
+<button class="ctx-item" data-backend="A" style="align-items:flex-start;padding:7px 8px" type="button">
+<iconify-icon icon="solar:cpu-bolt-bold" style="font-size:14px;margin-top:1px"></iconify-icon>
+<span class="flex-1">
+<span class="t-body block leading-tight">后端 A · 本地识别</span>
+<span class="t-caption faint block mt-[2px]">延迟低，占用约 300 MB 内存</span>
+</span>
+<iconify-icon class="backend-check" icon="solar:check-circle-bold" style="font-size:13px;margin-top:2px;color:var(--accent)"></iconify-icon>
+</button>
+<button class="ctx-item" data-backend="B" style="align-items:flex-start;padding:7px 8px" type="button">
+<iconify-icon icon="solar:keyboard-bold" style="font-size:14px;margin-top:1px"></iconify-icon>
+<span class="flex-1">
+<span class="t-body block leading-tight">后端 B · 输入法</span>
+<span class="t-caption faint block mt-[2px]">需确认虚拟声卡与输入监控可用</span>
+</span>
+<iconify-icon class="backend-check hide" icon="solar:check-circle-bold" style="font-size:13px;margin-top:2px;color:var(--accent)"></iconify-icon>
+</button>
+</div>
+</div>
+</div>
+<!-- 桌面图标 -->
+<div class="mt-auto p-4 grid grid-cols-4 gap-3 opacity-70">
+<div class="flex flex-col items-center gap-1"><iconify-icon icon="solar:folder-bold" style="font-size:22px;color:#4a8ee0"></iconify-icon><span class="t-caption" style="color:var(--label)">项目</span></div>
+<div class="flex flex-col items-center gap-1"><iconify-icon icon="solar:folder-bold" style="font-size:22px;color:#4a8ee0"></iconify-icon><span class="t-caption" style="color:var(--label)">截图</span></div>
+<div class="flex flex-col items-center gap-1"><iconify-icon icon="solar:document-text-bold" style="font-size:22px;color:var(--label-2)"></iconify-icon><span class="t-caption" style="color:var(--label)">备忘.md</span></div>
+<div class="flex flex-col items-center gap-1"><iconify-icon icon="solar:trash-bin-trash-bold" style="font-size:22px;color:var(--label-3)"></iconify-icon><span class="t-caption" style="color:var(--label)">废纸篓</span></div>
+</div>
+</div>
+</section>
+<!-- 控制与说明 -->
+<div class="space-y-5">
+<section class="frame-card p-5">
+<div class="flex items-center justify-between">
+<h2 class="t-title">画板状态</h2>
+<span class="t-caption faint">切换即时生效</span>
+</div>
+<div class="seg mt-3 w-full" id="popoverStateSeg" style="display:flex">
+<button class="seg-item on flex-1 text-center" data-pstate="connected" type="button">D-02 已连接</button>
+<button class="seg-item flex-1 text-center" data-pstate="recording" type="button">D-03 收音中</button>
+<button class="seg-item flex-1 text-center" data-pstate="disconnected" type="button">D-04 未连接</button>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-2">
+<div class="h-[34px] rounded-[8px] px-3 flex items-center gap-2 t-caption" style="background: var(--panel)">
+<button class="flex-1 text-left flex items-center justify-between" id="bannerToggle" type="button">
+<span>顶部授权横幅</span>
+<span class="px-2 py-[2px] rounded-full" id="bannerState" style="background: var(--window)">关</span>
+</button>
+</div>
+<div class="h-[34px] rounded-[8px] px-3 flex items-center gap-2 t-caption" style="background: var(--panel)">
+<button class="flex-1 text-left flex items-center justify-between" id="levelToggle" type="button">
+<span>演示电平</span>
+<span class="px-2 py-[2px] rounded-full" id="levelState" style="background: var(--window)">开</span>
+</button>
+</div>
+</div>
+<p class="t-caption faint mt-3">已连接为空闲态；收音中播放模拟动效；未连接显示配对入口。所有状态均为预设演示。</p>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">区域规格</h2>
+<div class="mt-3 space-y-[10px]">
+<div class="flex items-start gap-3">
+<span class="t-caption mono px-1.5 py-[2px] rounded" style="background: var(--panel); color: var(--label-2)">44</span>
+<div class="flex-1"><p class="t-body">状态行</p><p class="t-caption muted">圆点 绿=已连接、灰=未连接、红=收音中、黄=异常；右侧整行可点，展开连接详情。</p></div>
+</div>
+<div class="flex items-start gap-3">
+<span class="t-caption mono px-1.5 py-[2px] rounded" style="background: var(--panel); color: var(--label-2)">72</span>
+<div class="flex-1"><p class="t-body">电平条</p><p class="t-caption muted">收音时才动；空闲时只保留一条 2 px 静线，绝不显示「0」。</p></div>
+</div>
+<div class="flex items-start gap-3">
+<span class="t-caption mono px-1.5 py-[2px] rounded" style="background: var(--panel); color: var(--label-2)">flex</span>
+<div class="flex-1"><p class="t-body">最近文本 · 演示</p><p class="t-caption muted">最多 3 条示例，每条 2 行截断；点击复制，悬停右侧 ··· 打开菜单：复制 / 删除。</p></div>
+</div>
+<div class="flex items-start gap-3">
+<span class="t-caption mono px-1.5 py-[2px] rounded" style="background: var(--panel); color: var(--label-2)">40</span>
+<div class="flex-1"><p class="t-body">底部状态栏</p><p class="t-caption muted">手机连接状态 + 后端下拉；切换后端前先弹确认。</p></div>
+</div>
+<div class="flex items-start gap-3">
+<span class="t-caption mono px-1.5 py-[2px] rounded" style="background: var(--panel); color: var(--label-2)">44</span>
+<div class="flex-1"><p class="t-body">底部操作栏</p><p class="t-caption muted">设置… 与 退出；退出前提示「手机将断开连接」。</p></div>
+</div>
+</div>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">不抢焦点验证</h2>
+<div class="mt-3 rounded-[8px] p-3" style="background: var(--panel)">
+<p class="t-caption muted mb-2">在下面输入框里打字，同时点击左侧弹窗任意按钮，光标应保持不动。</p>
+<div class="rounded-[6px] px-3 py-2 t-body flex items-center" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<input class="w-full bg-transparent outline-none" id="focusProbe" style="color: var(--label)" type="text" value="明天把方案发给你"/>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span class="t-caption faint">焦点事件计数</span>
+<span class="t-caption mono" id="focusBlurCount" style="color: var(--accent)">0 次失焦</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+<section class="frame-card mt-6 p-5">
+<div class="flex items-center justify-between mb-3">
+<h2 class="t-title">交互反馈记录</h2>
+<span class="t-caption faint">所有操作都会计入下方日志，便于核对验收项</span>
+</div>
+<div class="space-y-[6px] max-h-[120px] overflow-y-auto" id="actionLog">
+<div class="t-caption flex items-center gap-2"><span class="faint mono">14:32:08</span><span class="muted">弹窗已展开 · 未抢占焦点</span></div>
+</div>
+<div class="hide mt-4 rounded-[8px] p-3 fade-in" id="quitConfirm" style="background: var(--yellow-bg)">
+<p class="t-body" style="color: var(--yellow)">演示退出确认；真实 App 中退出会导致手机断开连接。</p>
+<div class="flex items-center gap-2 mt-3">
+<button class="btn-secondary px-3 py-[5px]" id="quitCancel" type="button">取消</button>
+<button class="px-3 py-[5px] rounded-[8px] t-body text-white" id="quitConfirmBtn" style="background: var(--red)" type="button">仍然退出</button>
+</div>
+</div>
+<div class="hide mt-4 rounded-[8px] p-3 fade-in" id="backendConfirm" style="background: var(--panel)">
+<p class="t-body">演示切换到后端 <span class="font-semibold" id="backendTarget">B · 输入法</span>？仅切换预设状态，不修改系统权限或真实后端。</p>
+<div class="flex items-center gap-2 mt-3">
+<button class="btn-secondary px-3 py-[5px]" id="backendCancel" type="button">取消</button>
+<button class="btn-primary px-3 py-[5px]" id="backendConfirmBtn" type="button">确认演示切换</button>
+</div>
+</div>
+</section>
+<footer class="hair-t mt-8 pt-5 flex items-center justify-between t-caption faint">
+<a class="hover:opacity-70" href="menubar.html">← D-01 菜单栏图标</a>
+<a class="hover:opacity-70" href="settings.html" style="color: var(--accent)">D-05 设置 · 通用 →</a>
+</footer>
+</div>
+<script>
+  const root = document.documentElement;
+  const segButtons = document.querySelectorAll('#appearanceSeg [data-appearance]');
+
+  const stateSeg = document.getElementById('popoverStateSeg');
+  const statusRow = document.getElementById('statusRow');
+  const statusDot = document.getElementById('statusDot');
+  const statusTitle = document.getElementById('statusTitle');
+  const statusSub = document.getElementById('statusSub');
+  const statusDetail = document.getElementById('statusDetail');
+  const banner = document.getElementById('banner');
+  const bannerToggle = document.getElementById('bannerToggle');
+  const bannerState = document.getElementById('bannerState');
+  const levelLive = document.getElementById('levelLive');
+  const levelIdle = document.getElementById('levelIdle');
+  const levelHint = document.getElementById('levelHint');
+  const levelToggle = document.getElementById('levelToggle');
+  const levelState = document.getElementById('levelState');
+  const recentList = document.getElementById('recentList');
+  const phoneDot = document.getElementById('phoneDot');
+  const phoneText = document.getElementById('phoneText');
+  const backendBtn = document.getElementById('backendBtn');
+  const backendMenu = document.getElementById('backendMenu');
+  const backendLabel = document.getElementById('backendLabel');
+  const detailBackend = document.getElementById('detailBackend');
+  const actionLog = document.getElementById('actionLog');
+  const quitConfirm = document.getElementById('quitConfirm');
+  const backendConfirm = document.getElementById('backendConfirm');
+  const backendTarget = document.getElementById('backendTarget');
+  const focusProbe = document.getElementById('focusProbe');
+  const focusBlurCount = document.getElementById('focusBlurCount');
+  const menuGlyph = document.getElementById('menuGlyph');
+
+  let currentState = 'connected';
+  let liveTimer = null;
+  let levelRunning = true;
+  let bannerOn = false;
+  let currentBackend = 'A';
+  let pendingBackend = 'A';
+
+  const recents = [
+    { id: 1, text: '今天下午三点开会', time: '14:31' },
+    { id: 2, text: '明天把方案发给你', time: '14:22' },
+    { id: 3, text: '把刚才那段会议纪要整理成三条，发给产品组。', time: '13:58' }
+  ];
+
+  function clock() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+  }
+
+  function log(text, tone) {
+    const row = document.createElement('div');
+    row.className = 't-caption flex items-center gap-2 fade-in';
+    const color = tone === 'warn' ? 'var(--yellow)' : tone === 'ok' ? 'var(--green)' : 'var(--label-2)';
+    row.innerHTML = '<span class="faint mono">' + clock() + '</span><span style="color:' + color + '">' + text + '</span>';
+    actionLog.prepend(row);
+    while (actionLog.children.length > 8) {
+      actionLog.removeChild(actionLog.lastElementChild);
+    }
+  }
+
+  function renderRecents() {
+    recentList.innerHTML = '';
+    recents.forEach(function (item) {
+      const row = document.createElement('div');
+      row.className = 'recent-item px-1 py-[6px] flex items-start gap-2';
+      row.innerHTML =
+        '<div class="flex-1 min-w-0">' +
+          '<p class="t-body">' + item.text + '</p>' +
+          '<span class="t-caption faint">' + item.time + '</span>' +
+        '</div>' +
+        '<button type="button" class="more-btn t-caption px-1 rounded hover:opacity-60" style="color: var(--label-3)" data-id="' + item.id + '">···</button>';
+      row.addEventListener('click', function (event) {
+        if (event.target.closest('.more-btn')) return;
+        copyText(item.text);
+      });
+      row.querySelector('.more-btn').addEventListener('click', function (event) {
+        event.stopPropagation();
+        openContextMenu(event.clientX, event.clientY, item.id);
+      });
+      recentList.appendChild(row);
+    });
+  }
+
+  function copyText(text) {
+    const short = text.length > 14 ? text.slice(0, 14) + '…' : text;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () {});
+    }
+    log('已复制「' + short + '」', 'ok');
+  }
+
+  let ctxMenu = null;
+  function closeContextMenu() {
+    if (ctxMenu && ctxMenu.parentNode) ctxMenu.parentNode.removeChild(ctxMenu);
+    ctxMenu = null;
+  }
+
+  function openContextMenu(x, y, id) {
+    closeContextMenu();
+    const popover = document.getElementById('popover');
+    const rect = popover.getBoundingClientRect();
+    const menu = document.createElement('div');
+    menu.className = 'ctx-menu fade-in';
+    menu.style.left = Math.max(8, Math.min(x - rect.left, 320 - 148)) + 'px';
+    menu.style.top = Math.max(8, Math.min(y - rect.top, 420 - 92)) + 'px';
+    menu.innerHTML =
+      '<button type="button" class="ctx-item" data-act="copy"><iconify-icon icon="solar:copy-bold" style="font-size:13px"></iconify-icon>复制</button>' +
+      '<div class="ctx-sep"></div>' +
+      '<button type="button" class="ctx-item" data-act="delete" style="color:var(--red)"><iconify-icon icon="solar:trash-bin-trash-bold" style="font-size:13px"></iconify-icon>删除</button>';
+    menu.querySelector('[data-act="copy"]').addEventListener('click', function () {
+      const item = recents.find(function (r) { return r.id === id; });
+      if (item) copyText(item.text);
+      closeContextMenu();
+    });
+    menu.querySelector('[data-act="delete"]').addEventListener('click', function () {
+      const idx = recents.findIndex(function (r) { return r.id === id; });
+      if (idx >= 0) recents.splice(idx, 1);
+      renderRecents();
+      log('已删除一条最近文本', 'warn');
+      closeContextMenu();
+    });
+    popover.appendChild(menu);
+    ctxMenu = menu;
+  }
+
+  document.addEventListener('click', function (event) {
+    if (ctxMenu && !event.target.closest('.ctx-menu')) closeContextMenu();
+    if (!event.target.closest('#backendBtn') && !event.target.closest('#backendMenu')) {
+      backendMenu.classList.add('hide');
+    }
+  });
+
+  function glyphFor(state) {
+    if (state === 'recording') {
+      return '<span style="display:inline-flex;gap:2px;align-items:center"><i style="display:block;width:2px;height:7px;background:var(--red);border-radius:2px"></i><i style="display:block;width:2px;height:12px;background:var(--red);border-radius:2px"></i><i style="display:block;width:2px;height:8px;background:var(--red);border-radius:2px"></i></span>';
+    }
+    if (state === 'disconnected') {
+      return '<span style="display:block;width:11px;height:11px;border-radius:9999px;border:1.4px solid var(--label-2)"></span>';
+    }
+    return '<span style="display:block;width:11px;height:11px;border-radius:9999px;background:var(--green)"></span>';
+  }
+
+  function setBanner(on) {
+    bannerOn = on;
+    if (on) {
+      banner.classList.remove('hide');
+      banner.classList.add('flex');
+    } else {
+      banner.classList.add('hide');
+      banner.classList.remove('flex');
+    }
+    bannerState.textContent = on ? '开' : '关';
+    bannerState.style.color = on ? 'var(--yellow)' : 'var(--label-2)';
+  }
+
+  function startLevels() {
+    stopLevels();
+    if (!levelRunning) return;
+    const bars = levelLive.querySelectorAll('.lvl-bar');
+    bars.forEach(function (bar) { bar.classList.add('rec-bar'); });
+    liveTimer = setInterval(function () {
+      const t = Date.now() / 220;
+      bars.forEach(function (bar, i) {
+        const base = Math.abs(Math.sin(t + i * 0.7)) * 22 + Math.abs(Math.cos(t * 0.6 + i)) * 8;
+        bar.style.height = Math.max(3, Math.min(32, base)) + 'px';
+      });
+    }, 90);
+  }
+
+  function stopLevels() {
+    if (liveTimer) {
+      clearInterval(liveTimer);
+      liveTimer = null;
+    }
+  }
+
+  function applyState(state) {
+    currentState = state;
+    document.querySelectorAll('#popoverStateSeg [data-pstate]').forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-pstate') === state);
+    });
+    menuGlyph.innerHTML = glyphFor(state);
+    statusDetail.classList.add('hide');
+    document.getElementById('statusChevron').style.transform = 'rotate(0deg)';
+    quitConfirm.classList.add('hide');
+    backendConfirm.classList.add('hide');
+    backendMenu.classList.add('hide');
+
+    if (state === 'connected') {
+      statusDot.style.background = 'var(--green)';
+      statusTitle.textContent = '已连接';
+      statusSub.textContent = 'Kevin 的 Mac · ' + (currentBackend === 'A' ? '本地识别' : '输入法');
+      phoneDot.style.background = 'var(--green)';
+      phoneText.textContent = '已连接';
+      levelLive.classList.add('hide');
+      levelLive.classList.remove('flex');
+      levelIdle.classList.remove('hide');
+      levelHint.textContent = '演示提示：按住手机按钮，说完松手';
+      levelHint.classList.remove('hide');
+      setBanner(false);
+      log('切到 D-02 已连接 · 空闲');
+    } else if (state === 'recording') {
+      statusDot.style.background = 'var(--red)';
+      statusTitle.textContent = '收音中';
+      statusSub.textContent = '正在接收音频 · 00:03';
+      phoneDot.style.background = 'var(--green)';
+      phoneText.textContent = '已连接';
+      levelLive.classList.remove('hide');
+      levelLive.classList.add('flex');
+      levelIdle.classList.add('hide');
+      levelHint.textContent = currentBackend === 'B'
+        ? '后端 B · 发送后显示「已发送到输入法·未确认」'
+        : '演示电平 · 松手后发送结果仍需确认上屏';
+      levelHint.classList.remove('hide');
+      setBanner(false);
+      startLevels();
+      log('切到 D-03 收音中 · 电平动态');
+    } else {
+      statusDot.style.background = 'var(--label-3)';
+      statusTitle.textContent = '等待手机连接';
+      statusSub.textContent = '演示：打开手机 App 扫描配对码';
+      phoneDot.style.background = 'var(--label-3)';
+      phoneText.textContent = '未连接';
+      levelLive.classList.add('hide');
+      levelLive.classList.remove('flex');
+      levelIdle.classList.remove('hide');
+      levelHint.textContent = '';
+      levelHint.classList.add('hide');
+      stopLevels();
+      setBanner(false);
+      log('切到 D-04 未连接 · 等待手机', 'warn');
+    }
+  }
+
+  statusRow.addEventListener('click', function () {
+    const hidden = statusDetail.classList.toggle('hide');
+    document.getElementById('statusChevron').style.transform = hidden ? 'rotate(0deg)' : 'rotate(180deg)';
+    log(hidden ? '收起连接详情' : '展开连接详情');
+  });
+
+  stateSeg.addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-pstate]');
+    if (!btn) return;
+    applyState(btn.getAttribute('data-pstate'));
+  });
+
+  bannerToggle.addEventListener('click', function () {
+    setBanner(!bannerOn);
+    log(bannerOn ? '显示顶部授权横幅' : '隐藏顶部授权横幅', bannerOn ? 'warn' : '');
+  });
+
+  levelToggle.addEventListener('click', function () {
+    levelRunning = !levelRunning;
+    levelState.textContent = levelRunning ? '开' : '关';
+    if (!levelRunning) {
+      stopLevels();
+      levelLive.querySelectorAll('.lvl-bar').forEach(function (bar) { bar.style.height = '6px'; });
+    } else if (currentState === 'recording') {
+      startLevels();
+    }
+    log(levelRunning ? '开启演示电平' : '关闭演示电平（静态）');
+  });
+
+  backendBtn.addEventListener('click', function (event) {
+    event.stopPropagation();
+    backendMenu.classList.toggle('hide');
+  });
+
+  backendMenu.addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-backend]');
+    if (!btn) return;
+    const code = btn.getAttribute('data-backend');
+    backendMenu.classList.add('hide');
+    pendingBackend = code;
+    backendTarget.textContent = code === 'A' ? 'A · 本地识别' : 'B · 输入法';
+    backendConfirm.classList.remove('hide');
+  });
+
+  document.getElementById('backendCancel').addEventListener('click', function () {
+    backendConfirm.classList.add('hide');
+    log('已取消后端切换');
+  });
+
+  document.getElementById('backendConfirmBtn').addEventListener('click', function () {
+    currentBackend = pendingBackend;
+    backendLabel.textContent = currentBackend === 'A' ? 'A · 本地' : 'B · 输入法';
+    detailBackend.textContent = currentBackend === 'A' ? 'A · 本地' : 'B · 输入法';
+    if (currentState === 'connected') {
+      statusSub.textContent = 'Kevin 的 Mac · ' + (currentBackend === 'A' ? '本地识别' : '输入法');
+    }
+    backendConfirm.classList.add('hide');
+    backendMenu.querySelectorAll('[data-backend]').forEach(function (b) {
+      const active = b.getAttribute('data-backend') === currentBackend;
+      const check = b.querySelector('.backend-check');
+      check.classList.toggle('hide', !active);
+    });
+    log('演示：后端已切换到 ' + (currentBackend === 'A' ? 'A · 本地识别' : 'B · 输入法'), 'ok');
+  });
+
+  document.getElementById('quitBtn').addEventListener('click', function () {
+    quitConfirm.classList.remove('hide');
+    log('触发退出确认 · 手机将断开连接', 'warn');
+  });
+
+  document.getElementById('quitCancel').addEventListener('click', function () {
+    quitConfirm.classList.add('hide');
+    log('已取消退出');
+  });
+
+  document.getElementById('quitConfirmBtn').addEventListener('click', function () {
+    quitConfirm.classList.add('hide');
+    log('原型：已确认退出（真实应用中手机将断开）', 'warn');
+  });
+
+  let blurCount = 0;
+  focusProbe.addEventListener('blur', function () {
+    blurCount += 1;
+    focusBlurCount.textContent = blurCount + ' 次失焦';
+    focusBlurCount.style.color = 'var(--red)';
+  });
+  focusProbe.addEventListener('focus', function () {
+    focusBlurCount.style.color = 'var(--accent)';
+  });
+
+  function applyAppearance(mode) {
+    if (mode === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    segButtons.forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-appearance') === mode);
+    });
+    try { localStorage.setItem('vr-appearance', mode); } catch (e) {}
+  }
+
+  segButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyAppearance(btn.getAttribute('data-appearance'));
+    });
+  });
+
+  let saved = 'system';
+  try { saved = localStorage.getItem('vr-appearance') || 'system'; } catch (e) {}
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyAppearance(saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light'));
+
+  renderRecents();
+  applyState('connected');
+</script>
+</body>
+</html>

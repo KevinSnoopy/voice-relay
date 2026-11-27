@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--app-background);
+  color: var(--app-foreground);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 抽屉：280ms easeOutCubic */
+@keyframes drawer-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.drawer-up {
+  animation: drawer-up 280ms cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 收音呼吸光环 */
+@keyframes breath {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.9;
+  }
+}
+.breath-ring {
+  animation: breath 1.6s ease-in-out infinite;
+}
+.breath-ring-slow {
+  animation: breath 2.2s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+/* 雷达波纹 */
+@keyframes radar {
+  0% {
+    transform: scale(0.45);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.radar-ring {
+  inset: 0;
+  animation: radar 2.7s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 4.5s linear infinite;
+}
+
+@keyframes scanner {
+  0% {
+    top: 16px;
+    opacity: 0.35;
+  }
+  50% {
+    top: calc(100% - 20px);
+    opacity: 1;
+  }
+  100% {
+    top: 16px;
+    opacity: 0.35;
+  }
+}
+.scanner-line {
+  animation: scanner 2.2s ease-in-out infinite;
+}
+
+/* 识别中跳点 */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    height: 10px;
+    opacity: 0.35;
+  }
+  50% {
+    height: 38px;
+    opacity: 1;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 0.9s ease-in-out infinite;
+}
+
+/* 深色模式（跟随系统或手动切换） */
+@media (prefers-color-scheme: dark) {
+  html:not(.force-light) .theme-dark {
+    color-scheme: dark;
+  }
+}
+
+.theme-dark .bg-white,
+.theme-dark .bg-white\/85,
+.theme-dark .bg-white\/80,
+.theme-dark .bg-white\/90 {
+  background-color: #0f172a !important;
+}
+.theme-dark .bg-slate-50,
+.theme-dark .bg-slate-50\/70,
+.theme-dark .bg-slate-50\/60,
+.theme-dark .bg-slate-100\/80,
+.theme-dark .bg-slate-100\/60,
+.theme-dark .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+.theme-dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+.theme-dark .text-slate-900,
+.theme-dark .text-slate-800,
+.theme-dark .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+.theme-dark .text-slate-600,
+.theme-dark .text-slate-500 {
+  color: #cbd5e1 !important;
+}
+.theme-dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+.theme-dark .border-slate-200,
+.theme-dark .border-slate-200\/70,
+.theme-dark .border-slate-300,
+.theme-dark .divide-slate-100 > * + * {
+  border-color: #334155 !important;
+}
+.theme-dark .bg-blue-50 {
+  background-color: rgba(37, 99, 235, 0.16) !important;
+}
+.theme-dark .text-blue-700,
+.theme-dark .text-blue-800 {
+  color: #93c5fd !important;
+}
+.theme-dark .bg-emerald-50,
+.theme-dark .bg-emerald-50\/60 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+.theme-dark .text-emerald-700,
+.theme-dark .text-emerald-800 {
+  color: #6ee7b7 !important;
+}
+.theme-dark .border-emerald-200 {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+.theme-dark .bg-amber-50,
+.theme-dark .bg-amber-50\/70 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+}
+.theme-dark .text-amber-900,
+.theme-dark .text-amber-800,
+.theme-dark .text-amber-700 {
+  color: #fcd34d !important;
+}
+.theme-dark .border-amber-200,
+.theme-dark .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+.theme-dark .bg-rose-50,
+.theme-dark .bg-rose-50\/60,
+.theme-dark .bg-rose-50\/70,
+.theme-dark .bg-rose-50\/40 {
+  background-color: rgba(244, 63, 94, 0.14) !important;
+}
+.theme-dark .text-rose-700,
+.theme-dark .text-rose-800,
+.theme-dark .text-rose-900 {
+  color: #fda4af !important;
+}
+.theme-dark .border-rose-200 {
+  border-color: rgba(244, 63, 94, 0.4) !important;
+}
+.theme-dark .bg-indigo-50,
+.theme-dark .bg-violet-50 {
+  background-color: rgba(99, 102, 241, 0.18) !important;
+}
+.theme-dark .shadow-\[0_1px_2px_rgba\(15\,23\,42\,0\.04\)\] {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}

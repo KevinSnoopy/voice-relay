@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>D-10 异常态与降级 · VoiceRelay</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --label: #1d1d1f;
+    --label-2: rgba(60, 60, 67, 0.6);
+    --label-3: rgba(60, 60, 67, 0.36);
+    --separator: rgba(60, 60, 67, 0.16);
+    --canvas: #ececea;
+    --window: #ffffff;
+    --panel: #f5f5f4;
+    --accent: #0a6cff;
+    --accent-soft: rgba(10, 108, 255, 0.12);
+    --yellow: #b45309;
+    --yellow-bg: rgba(255, 204, 0, 0.18);
+    --green: #1c8f4a;
+    --red: #d32f2f;
+    --red-soft: rgba(211, 47, 47, 0.1);
+    --card-ring: rgba(0, 0, 0, 0.07);
+    --wallpaper: linear-gradient(140deg, #ccd8e8 0%, #e6d9e2 50%, #d3e2d6 100%);
+  }
+  html.dark {
+    --label: #f2f2f7;
+    --label-2: rgba(235, 235, 245, 0.62);
+    --label-3: rgba(235, 235, 245, 0.34);
+    --separator: rgba(235, 235, 245, 0.16);
+    --canvas: #131315;
+    --window: #1e1e20;
+    --panel: #262629;
+    --accent: #3d9bff;
+    --accent-soft: rgba(61, 155, 255, 0.18);
+    --yellow: #f0b429;
+    --yellow-bg: rgba(240, 180, 41, 0.14);
+    --green: #43c476;
+    --red: #ff6b60;
+    --red-soft: rgba(255, 107, 96, 0.14);
+    --card-ring: rgba(255, 255, 255, 0.09);
+    --wallpaper: linear-gradient(140deg, #1a2230 0%, #2b2029 50%, #17231d 100%);
+  }
+  body {
+    background: var(--canvas);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .t-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .t-body { font-size: 13px; line-height: 1.5; }
+  .t-caption { font-size: 11px; line-height: 1.4; }
+  .muted { color: var(--label-2); }
+  .faint { color: var(--label-3); }
+  .hair-t { border-top: 0.5px solid var(--separator); }
+  .hair-b { border-bottom: 0.5px solid var(--separator); }
+  .frame-card { background: var(--window); border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px var(--card-ring); }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .btn-secondary { background: var(--window); color: var(--label); border: 0.5px solid var(--separator); border-radius: 8px; font-size: 13px; }
+  .seg { background: var(--panel); border-radius: 8px; padding: 2px; display: inline-flex; }
+  .seg-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; color: var(--label-2); }
+  .seg-item.on { background: var(--window); color: var(--label); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .badge { font-size: 11px; line-height: 1; display: inline-flex; align-items: center; gap: 4px; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .hide { display: none !important; }
+  ::-webkit-scrollbar { display: none; }
+  .wallpaper { background: var(--wallpaper); }
+
+  .popover { width: 320px; height: 420px; border-radius: 12px; background: var(--window); box-shadow: 0 18px 48px rgba(0,0,0,0.26), 0 0 0 0.5px var(--card-ring); display: flex; flex-direction: column; overflow: hidden; }
+  .status-dot { width: 7px; height: 7px; border-radius: 9999px; }
+  .banner { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--yellow-bg); border-bottom: 0.5px solid var(--separator); }
+  .qr-mini { width: 92px; height: 92px; border-radius: 4px; background:
+      linear-gradient(90deg, var(--label) 3px, transparent 3px) 0 0 / 6px 6px,
+      linear-gradient(0deg, var(--label) 3px, transparent 3px) 0 0 / 6px 6px,
+      var(--window);
+    opacity: .82; }
+  .ctx-menu { position: absolute; z-index: 40; min-width: 200px; border-radius: 8px; background: var(--window); padding: 4px; box-shadow: 0 10px 28px rgba(0,0,0,0.24), 0 0 0 0.5px var(--card-ring); }
+  .ctx-item { display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 6px 8px; border-radius: 5px; font-size: 12px; color: var(--label); text-align: left; }
+  .ctx-item:hover { background: var(--accent); color: #fff; }
+  .ctx-disabled { opacity: .42; cursor: not-allowed; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 8px 14px; border-radius: 8px; background: rgba(30,30,32,0.94); color: #fff; font-size: 12px; z-index: 99; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .scenario-card { transition: box-shadow .2s ease, transform .2s ease; }
+  .scenario-card:hover { box-shadow: 0 10px 26px rgba(0,0,0,0.1), 0 0 0 1px var(--accent); transform: translateY(-2px); }
+  .scene-item.on { background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+  .fade-in { animation: fadeIn .18s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .pill { font-size: 11px; padding: 2px 7px; border-radius: 9999px; background: var(--panel); color: var(--label-2); }
+  .loading-indeterminate { animation: loadingSlide 1.4s ease-in-out infinite; }
+  @keyframes loadingSlide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(280%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .loading-indeterminate { animation: none; width: 100% !important; opacity: .55; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-[1240px] mx-auto px-8 py-8">
+<nav class="flex items-center justify-between mb-6">
+<a class="t-caption muted flex items-center gap-1 hover:opacity-70" href="home.html">
+<iconify-icon icon="solar:alt-arrow-left-linear" style="font-size:13px"></iconify-icon> 画板索引
+      </a>
+<div class="flex items-center gap-3">
+<span class="badge px-2 py-1 rounded-full shrink-0" style="background: var(--yellow-bg); color: var(--yellow); box-shadow: inset 0 0 0 0.5px var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:12px"></iconify-icon>演示数据 · 非实时状态
+</span>
+<div class="seg" id="appearanceSeg">
+<button class="seg-item on" data-appearance="light" type="button">浅色</button>
+<button class="seg-item" data-appearance="dark" type="button">深色</button>
+</div>
+<span class="t-caption faint mono">D-10</span>
+</div>
+</nav>
+<header class="mb-6">
+<h1 class="text-[22px] font-semibold tracking-tight">异常态与降级界面</h1>
+<p class="t-body muted mt-1 max-w-[800px]">所有失败场景都给出可点击的下一步。权限、连接、最近文本、电平和通知均为演示，不读取系统或发送真实通知。</p>
+</header>
+<div class="grid grid-cols-[400px_1fr] gap-6 items-start">
+<!-- 动态弹窗 -->
+<section class="frame-card p-5">
+<div class="flex items-center justify-between mb-3">
+<span class="t-caption muted">弹窗演示预览</span>
+<span class="badge" id="sceneTag" style="color: var(--yellow)">权限缺失</span>
+</div>
+<div class="rounded-[10px] wallpaper p-4 flex justify-center">
+<div class="popover">
+<div class="banner" id="banner">
+<iconify-icon icon="solar:danger-triangle-bold" style="font-size:13px;color:var(--yellow)"></iconify-icon>
+<span class="t-caption flex-1" id="bannerText" style="color: var(--yellow)">需要授权才能使用</span>
+<button class="t-caption px-2 py-[3px] rounded-[6px]" id="bannerAction" style="background: var(--yellow); color: #fff" type="button">去授权</button>
+</div>
+<div class="h-[44px] px-3 flex items-center gap-2 shrink-0">
+<span class="status-dot" id="statusDot" style="background: var(--yellow)"></span>
+<div class="flex-1 min-w-0">
+<div class="t-body font-medium leading-tight" id="statusTitle">需要授权</div>
+<div class="t-caption muted leading-tight mt-[1px]" id="statusSub">辅助功能未授权 · 无法写入文字</div>
+</div>
+<button class="t-caption px-2 py-[2px] rounded-[5px]" id="statusTail" style="color: var(--accent); background: var(--accent-soft)" type="button">处理</button>
+</div>
+<div class="h-[72px] px-3 flex flex-col justify-center shrink-0">
+<div class="hide rounded-[6px] px-3 py-2 flex items-center gap-2" id="engineBox" style="background: var(--panel)">
+<iconify-icon icon="solar:refresh-circle-bold" style="font-size:14px;color:var(--label-2)"></iconify-icon>
+<div class="flex-1">
+<div class="t-caption">模型加载中 · 演示状态</div>
+<div class="mt-1 rounded-full overflow-hidden" style="height:3px;background:var(--separator)">
+<div class="loading-indeterminate" style="width:36%;height:100%;background:var(--accent)"></div>
+</div>
+</div>
+</div>
+<div class="h-[32px] flex items-center justify-center" id="levelLine">
+<span style="display:block;width:100%;height:2px;border-radius:2px;background:var(--separator)"></span>
+</div>
+<div class="hide mt-1" id="voiceBtnRow">
+<button class="w-full rounded-[6px] py-[4px] t-caption" disabled="" style="background: var(--panel); color: var(--label-3); cursor: not-allowed" type="button">语音按钮已禁用 · 等待模型就绪</button>
+</div>
+</div>
+<div class="flex-1 min-h-0 px-3 flex flex-col hair-t">
+<div class="flex items-center justify-between pt-[10px] pb-1">
+<span class="t-caption muted font-medium" id="listTitle">最近</span>
+<span class="t-caption faint" id="listMeta">最多 3 条</span>
+</div>
+<div class="flex-1 min-h-0 overflow-y-auto pb-2" id="listBody"></div>
+</div>
+<div class="h-[40px] px-3 flex items-center justify-between hair-t shrink-0">
+<div class="flex items-center gap-1">
+<span class="t-caption muted">手机（演示）</span>
+<span class="status-dot" id="phoneDot" style="width:6px;height:6px;background:var(--yellow)"></span>
+<span class="t-caption" id="phoneText">已连接</span>
+</div>
+<div class="relative flex items-center gap-1">
+<span class="t-caption muted">后端</span>
+<button class="t-caption px-1 py-[2px] rounded-[5px] flex items-center gap-1" id="backendBtn" type="button">
+<span id="backendLabel">A · 本地</span>
+<iconify-icon icon="solar:alt-arrow-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+<div class="hide ctx-menu" id="backendMenu" style="right:0;top:22px;min-width:212px">
+<button class="ctx-item" data-b="A" type="button">
+<iconify-icon icon="solar:cpu-bolt-bold" style="font-size:13px;margin-top:2px"></iconify-icon>
+<span><span class="t-body block leading-tight">A · 本地识别</span><span class="t-caption faint block mt-[1px]">当前使用</span></span>
+</button>
+<div class="ctx-item ctx-disabled" title="虚拟声卡未检出；仅检出设备也不代表后端 B 已可用">
+<iconify-icon icon="solar:keyboard-bold" style="font-size:13px;margin-top:2px"></iconify-icon>
+<span><span class="t-body block leading-tight">B · 输入法</span><span class="t-caption block mt-[1px]">未安装虚拟声卡</span></span>
+</div>
+</div>
+</div>
+</div>
+<div class="h-[44px] px-3 flex items-center justify-between hair-t shrink-0">
+<a class="t-body px-2 py-1 rounded-[6px]" href="settings.html" style="color: var(--accent)">设置…</a>
+<span class="t-body px-2 py-1 rounded-[6px]" style="color: var(--label)">退出</span>
+</div>
+</div>
+</div>
+<p class="t-caption faint mt-3 text-center">320 × 420 · 顶部横幅只在异常时替换状态区上方空间</p>
+</section>
+<!-- 场景列表 -->
+<div class="space-y-4">
+<div class="grid grid-cols-2 gap-3" id="scenarioList">
+<button class="scenario-card frame-card p-4 text-left scene-item on" data-scene="permission" type="button">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<iconify-icon icon="solar:shield-warning-bold" style="font-size:15px;color:var(--yellow)"></iconify-icon>
+<span class="t-body font-medium">权限被系统重置</span>
+</div>
+<span class="pill">场景 1</span>
+</div>
+<p class="t-caption muted mt-2">图标转异常态 + 弹窗顶部黄色横幅，一键去授权。</p>
+</button>
+<button class="scenario-card frame-card p-4 text-left scene-item" data-scene="offline" type="button">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<iconify-icon icon="solar:smartphone-off-bold" style="font-size:15px;color:var(--label-2)"></iconify-icon>
+<span class="t-body font-medium">手机未连接</span>
+</div>
+<span class="pill">场景 2</span>
+</div>
+<p class="t-caption muted mt-2">显示「等待手机连接」+ 二维码入口，不显示过期文本。</p>
+</button>
+<button class="scenario-card frame-card p-4 text-left scene-item" data-scene="engine" type="button">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<iconify-icon icon="solar:cpu-bolt-bold" style="font-size:15px;color:var(--label-2)"></iconify-icon>
+<span class="t-body font-medium">识别引擎未加载</span>
+</div>
+<span class="pill">场景 3</span>
+</div>
+<p class="t-caption muted mt-2">状态行显示「模型加载中」，语音按钮禁用；不定进度条仅作演示。</p>
+</button>
+<button class="scenario-card frame-card p-4 text-left scene-item" data-scene="inject" type="button">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<iconify-icon icon="solar:bell-bing-bold" style="font-size:15px;color:var(--yellow)"></iconify-icon>
+<span class="t-body font-medium">注入失败</span>
+</div>
+<span class="pill">场景 4</span>
+</div>
+<p class="t-caption muted mt-2">图标短暂变黄，状态与通知显示「未送达」，不自动复制。</p>
+</button>
+<button class="scenario-card frame-card p-4 text-left scene-item" data-scene="vcard" type="button">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<iconify-icon icon="solar:soundwave-bold" style="font-size:15px;color:var(--label-2)"></iconify-icon>
+<span class="t-body font-medium">虚拟声卡缺失</span>
+</div>
+<span class="pill">场景 5</span>
+</div>
+<p class="t-caption muted mt-2">后端下拉中 B 置灰，悬停提示「未安装虚拟声卡」。</p>
+</button>
+<button class="scenario-card frame-card p-4 text-left scene-item" data-scene="reconnect" type="button">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<iconify-icon icon="solar:refresh-square-bold" style="font-size:15px;color:var(--accent)"></iconify-icon>
+<span class="t-body font-medium">恢复成功</span>
+</div>
+<span class="pill">对照</span>
+</div>
+<p class="t-caption muted mt-2">重连成功只更新状态，不发系统通知。</p>
+</button>
+</div>
+<section class="frame-card p-5">
+<div class="flex items-center justify-between mb-2">
+<h2 class="t-title">处理指引</h2>
+<span class="t-caption faint" id="guideTag">场景 1 / 5</span>
+</div>
+<p class="t-body" id="guideTitle">权限被系统重置</p>
+<p class="t-caption muted mt-1" id="guideDesc">macOS 更新或用户手动清理可能重置授权。此时图标变为异常态，弹窗顶部出现黄色横幅。</p>
+<ul class="mt-3 space-y-[6px]" id="guideSteps"></ul>
+<div class="flex items-center gap-2 mt-4">
+<a class="btn-primary px-3 py-[5px]" href="settings.html#permission" id="guideAction">去授权</a>
+<button class="btn-secondary px-3 py-[5px]" id="copyDiagnose" type="button">复制诊断信息</button>
+</div>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">通知策略 · 演示</h2>
+<div class="mt-2 space-y-2">
+<div class="flex items-center justify-between t-caption"><span class="muted">注入失败</span><span class="flex items-center gap-1" style="color: var(--yellow)"><iconify-icon icon="solar:bell-bing-bold" style="font-size:12px"></iconify-icon>发送通知</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">权限被重置</span><span class="flex items-center gap-1" style="color: var(--yellow)"><iconify-icon icon="solar:bell-bing-bold" style="font-size:12px"></iconify-icon>发送通知</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">识别成功</span><span class="flex items-center gap-1 muted"><iconify-icon icon="solar:bell-off-bold" style="font-size:12px"></iconify-icon>不打扰</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">重连成功</span><span class="flex items-center gap-1 muted"><iconify-icon icon="solar:bell-off-bold" style="font-size:12px"></iconify-icon>不打扰</span></div>
+</div>
+</section>
+</div>
+</div>
+<!-- 系统通知预览 -->
+<section class="frame-card mt-6 p-5">
+<div class="flex items-center justify-between mb-3">
+<h2 class="t-title">系统通知样式（演示 · 仅失败时）</h2>
+<button class="btn-secondary px-3 py-[5px] text-[12px]" id="showNotif" type="button">模拟通知</button>
+</div>
+<div class="rounded-[10px] wallpaper p-6 flex justify-end" style="min-height:130px">
+<div class="hide w-[340px] rounded-[14px] p-3 flex items-start gap-3 fade-in" id="notifCard" style="background: rgba(250,250,250,0.92); backdrop-filter: blur(18px); box-shadow: 0 12px 34px rgba(0,0,0,0.22); color:#1d1d1f">
+<div class="w-[34px] h-[34px] rounded-[8px] flex items-center justify-center shrink-0" style="background: var(--yellow)">
+<iconify-icon icon="solar:keyboard-bold" style="font-size:18px;color:#fff"></iconify-icon>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between gap-2">
+<span class="t-body font-medium">VoiceRelay</span>
+<span class="t-caption" style="color: rgba(60,60,67,.6)">现在</span>
+</div>
+<p class="t-caption mt-[2px]">未送达</p>
+<p class="t-caption" style="color: rgba(60,60,67,.7)">文字未写入当前 App，也不会自动复制。请检查输入焦点后重新录音。</p>
+</div>
+</div>
+<div class="t-caption muted flex items-center" id="notifEmpty">当前没有通知（成功不打扰）</div>
+</div>
+</section>
+<footer class="hair-t mt-8 pt-5 flex items-center justify-between t-caption faint">
+<a class="hover:opacity-70" href="overlay.html">← D-09 悬浮电平窗</a>
+<a class="hover:opacity-70" href="components.html" style="color: var(--accent)">组件页 →</a>
+</footer>
+</div>
+<script>
+  const root = document.documentElement;
+  const segButtons = document.querySelectorAll('#appearanceSeg [data-appearance]');
+
+  const banner = document.getElementById('banner');
+  const bannerText = document.getElementById('bannerText');
+  const bannerAction = document.getElementById('bannerAction');
+  const statusDot = document.getElementById('statusDot');
+  const statusTitle = document.getElementById('statusTitle');
+  const statusSub = document.getElementById('statusSub');
+  const statusTail = document.getElementById('statusTail');
+  const engineBox = document.getElementById('engineBox');
+  const voiceBtnRow = document.getElementById('voiceBtnRow');
+  const levelLine = document.getElementById('levelLine');
+  const listBody = document.getElementById('listBody');
+  const listTitle = document.getElementById('listTitle');
+  const listMeta = document.getElementById('listMeta');
+  const phoneDot = document.getElementById('phoneDot');
+  const phoneText = document.getElementById('phoneText');
+  const sceneTag = document.getElementById('sceneTag');
+  const guideTag = document.getElementById('guideTag');
+  const guideTitle = document.getElementById('guideTitle');
+  const guideDesc = document.getElementById('guideDesc');
+  const guideSteps = document.getElementById('guideSteps');
+  const guideAction = document.getElementById('guideAction');
+  const backendBtn = document.getElementById('backendBtn');
+  const backendMenu = document.getElementById('backendMenu');
+  const notifCard = document.getElementById('notifCard');
+  const notifEmpty = document.getElementById('notifEmpty');
+
+  let currentScene = 'permission';
+  let injectTimer = null;
+
+  const scenes = {
+    permission: {
+      tag: '权限缺失',
+      tagColor: 'var(--yellow)',
+      banner: '需要授权才能使用',
+      bannerAction: '去授权',
+      dot: 'var(--yellow)',
+      title: '需要授权',
+      sub: '辅助功能未授权 · 无法写入文字',
+      tail: '处理',
+      phoneDot: 'var(--yellow)',
+      phoneText: '已连接',
+      showEngine: false,
+      showVoice: false,
+      list: 'recents',
+      guideTitle: '权限被系统重置',
+      guideDesc: 'macOS 更新或用户手动清理可能重置授权。此时图标变为异常态，弹窗顶部出现黄色横幅。',
+      steps: ['点横幅里的「去授权」，或点状态行右侧「处理」', '在系统设置里勾选 VoiceRelay 的辅助功能', '授权后回到设置 → 权限，点「重新检测」确认'],
+      action: '去授权',
+      actionHref: 'settings.html#permission'
+    },
+    offline: {
+      tag: '手机未连接',
+      tagColor: 'var(--label-2)',
+      banner: '手机未连接',
+      bannerAction: '配对',
+      dot: 'var(--label-3)',
+      title: '等待手机连接',
+      sub: '打开手机 App，扫描下方配对码',
+      tail: '配对码',
+      phoneDot: 'var(--label-3)',
+      phoneText: '未连接',
+      showEngine: false,
+      showVoice: false,
+      list: 'qr',
+      guideTitle: '手机未连接',
+      guideDesc: '演示场景假设 Mac 端已监听但未收到手机握手；不读取真实网络或设备连接。',
+      steps: ['把手机和 Mac 连到同一个 Wi-Fi', '打开手机 App，点「扫描配对码」', '扫不到时点下面的「复制局域网地址」手动输入', '蓝牙 GATT 订阅仅显示「手机已订阅·待认证」，不等同已认证连接'],
+      action: '复制局域网地址',
+      actionHref: ''
+    },
+    engine: {
+      tag: '模型加载中',
+      tagColor: 'var(--label-2)',
+      banner: '识别引擎正在加载',
+      bannerAction: '查看进度',
+      dot: 'var(--label-2)',
+      title: '模型加载中',
+      sub: 'SenseVoice Small · 演示加载状态',
+      tail: '取消',
+      phoneDot: 'var(--green)',
+      phoneText: '已连接',
+      showEngine: true,
+      showVoice: true,
+      list: 'recents',
+      guideTitle: '识别引擎未加载',
+      guideDesc: '此原型仅展示模型加载态，不执行真实加载；不定进度条不表示完成百分比或预计时间。',
+      steps: ['查看加载态与禁用按钮的视觉反馈', '不定进度条仅表示仍在处理', '可切换其他场景查看恢复状态', '需要排查时在真实 App 中导出诊断'],
+      action: '打开语音设置',
+      actionHref: 'settings.html#voice'
+    },
+    inject: {
+      tag: '未送达',
+      tagColor: 'var(--yellow)',
+      banner: '文字未送达当前 App',
+      bannerAction: '查看建议',
+      dot: 'var(--yellow)',
+      title: '未送达',
+      sub: '文字未写入当前 App · 未自动复制',
+      tail: '查看建议',
+      phoneDot: 'var(--green)',
+      phoneText: '已连接',
+      showEngine: false,
+      showVoice: false,
+      list: 'failed',
+      guideTitle: '注入失败',
+      guideDesc: '菜单栏图标短暂变黄，并展示一次通知。失败文字仅保留在演示列表中，不自动复制，也不承诺再次发送。',
+      steps: ['先点一下目标 App 的输入框，再重新录音', 'App 切换使用 ⌘Tab，覆盖所有正在运行的 App', '检查辅助功能权限', '失败后查看手机端确认弹窗与具体原因'],
+      action: '打开按键设置',
+      actionHref: 'settings.html#keys'
+    },
+    vcard: {
+      tag: '后端不可用',
+      tagColor: 'var(--label-2)',
+      banner: '后端 B 暂不可用',
+      bannerAction: '查看原因',
+      dot: 'var(--label-2)',
+      title: '已连接 · 本地识别',
+      sub: '后端 B 需要虚拟声卡，当前未安装',
+      tail: '详情',
+      phoneDot: 'var(--green)',
+      phoneText: '已连接',
+      showEngine: false,
+      showVoice: false,
+      list: 'recents',
+      guideTitle: '虚拟声卡缺失',
+      guideDesc: '后端 B 依赖虚拟声卡把音频交给输入法。未安装时该项置灰；仅检出设备不等于 B 已可用。',
+      steps: ['点击后端下拉，B 显示为灰色并提示「虚拟声卡未检出」', '继续使用后端 A · 本地识别', '安装后确认虚拟声卡真正可用，并检查输入监控权限', '只有确认可用后，后端 B 才应解除禁用'],
+      action: '打开语音设置',
+      actionHref: 'settings.html#voice'
+    },
+    reconnect: {
+      tag: '恢复正常',
+      tagColor: 'var(--green)',
+      banner: '',
+      bannerAction: '',
+      dot: 'var(--green)',
+      title: '已连接',
+      sub: 'Kevin 的 Mac · 本地识别',
+      tail: '详情',
+      phoneDot: 'var(--green)',
+      phoneText: '已连接',
+      showEngine: false,
+      showVoice: false,
+      list: 'recents',
+      guideTitle: '恢复成功',
+      guideDesc: '重连成功只更新状态行，不发系统通知。用户正在输入时不会被弹窗打断。',
+      steps: ['图标从异常态过渡到实心圆环（200 ms）', '横幅自动收起，不需要手动关闭', '最近文本保留，可点击复制', '无需重启 App'],
+      action: '查看弹窗',
+      actionHref: 'popover.html'
+    }
+  };
+
+  const recentTexts = [
+    { text: '今天下午三点开会', time: '14:31' },
+    { text: '明天把方案发给你', time: '14:22' }
+  ];
+
+  function renderList(kind) {
+    listBody.innerHTML = '';
+    if (kind === 'qr') {
+      listTitle.textContent = '配对';
+      listMeta.textContent = '局域网 192.168.1.24:8787';
+      const wrap = document.createElement('div');
+      wrap.className = 'flex items-center gap-3 pt-1';
+      wrap.innerHTML =
+        '<div class="qr-mini shrink-0"></div>' +
+        '<div class="flex-1">' +
+          '<p class="t-caption muted">用手机 App 扫描左侧二维码，或手动输入下方地址。</p>' +
+          '<button type="button" class="t-caption mt-2 px-2 py-[3px] rounded-[5px]" id="copyAddr" style="background: var(--panel); color: var(--accent)">复制局域网地址</button>' +
+          '<p class="t-caption faint mt-2">上次连接：今天 13:58</p>' +
+        '</div>';
+      listBody.appendChild(wrap);
+      const copy = wrap.querySelector('#copyAddr');
+      copy.addEventListener('click', function () {
+        showToast('演示：已复制 voicerelay.local:8787');
+      });
+      return;
+    }
+    if (kind === 'failed') {
+      listTitle.textContent = '未送达';
+      listMeta.textContent = '未自动复制';
+      const item = document.createElement('div');
+      item.className = 'rounded-[8px] px-2 py-2' ;
+      item.style.background = 'var(--red-soft)';
+      item.innerHTML =
+        '<p class="t-body" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">把会议室从三楼换到五楼，记得提前十分钟通知大家。</p>' +
+        '<div class="flex items-center justify-between mt-1">' +
+          '<span class="t-caption" style="color: var(--red)">未送达</span>' +
+          '<button type="button" class="t-caption" id="retryInject" style="color: var(--accent)">查看处理建议</button>' +
+        '</div>';
+      listBody.appendChild(item);
+      item.querySelector('#retryInject').addEventListener('click', function () {
+        showToast('演示：请检查输入焦点后重新录音，不自动复制或再次发送');
+      });
+      return;
+    }
+    listTitle.textContent = '最近（演示）';
+    listMeta.textContent = '最多 3 条';
+    recentTexts.forEach(function (r) {
+      const row = document.createElement('div');
+      row.className = 'rounded-[8px] px-2 py-[6px] flex items-start gap-2';
+      row.innerHTML =
+        '<div class="flex-1 min-w-0"><p class="t-body" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + r.text + '</p>' +
+        '<span class="t-caption faint">' + r.time + '</span></div>' +
+        '<iconify-icon icon="solar:copy-bold" style="font-size:12px;color:var(--label-3);margin-top:3px"></iconify-icon>';
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', function () { showToast('演示：已复制：' + r.text); });
+      listBody.appendChild(row);
+    });
+  }
+
+  function renderSteps(steps) {
+    guideSteps.innerHTML = '';
+    steps.forEach(function (text, i) {
+      const li = document.createElement('li');
+      li.className = 'flex items-start gap-2 t-caption';
+      li.innerHTML = '<span class="w-[16px] h-[16px] rounded-full flex items-center justify-center shrink-0" style="background: var(--panel); color: var(--label-2); font-size:10px">' + (i + 1) + '</span><span class="muted" style="padding-top:2px">' + text + '</span>';
+      guideSteps.appendChild(li);
+    });
+  }
+
+  function applyScene(key) {
+    const scene = scenes[key];
+    if (!scene) return;
+    currentScene = key;
+    document.querySelectorAll('[data-scene]').forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-scene') === key);
+    });
+    sceneTag.textContent = scene.tag;
+    sceneTag.style.color = scene.tagColor;
+
+    if (scene.banner) {
+      banner.classList.remove('hide');
+      banner.style.display = 'flex';
+      bannerText.textContent = scene.banner;
+      bannerAction.textContent = scene.bannerAction;
+    } else {
+      banner.classList.add('hide');
+    }
+
+    statusDot.style.background = scene.dot;
+    statusTitle.textContent = scene.title;
+    statusSub.textContent = scene.sub;
+    statusTail.textContent = scene.tail;
+    phoneDot.style.background = scene.phoneDot;
+    phoneText.textContent = scene.phoneText;
+
+    if (scene.showEngine) {
+      engineBox.classList.remove('hide');
+      levelLine.classList.add('hide');
+    } else {
+      engineBox.classList.add('hide');
+      levelLine.classList.remove('hide');
+    }
+    if (scene.showVoice) {
+      voiceBtnRow.classList.remove('hide');
+    } else {
+      voiceBtnRow.classList.add('hide');
+    }
+
+    renderList(scene.list);
+
+    guideTag.textContent = '场景 ' + (Object.keys(scenes).indexOf(key) + 1) + ' / 6';
+    guideTitle.textContent = scene.guideTitle;
+    guideDesc.textContent = scene.guideDesc;
+    renderSteps(scene.steps);
+    if (scene.actionHref) {
+      guideAction.textContent = scene.action;
+      guideAction.setAttribute('href', scene.actionHref);
+      guideAction.style.display = 'inline-flex';
+    } else {
+      guideAction.textContent = scene.action;
+      guideAction.setAttribute('href', 'javascript:void(0)');
+      guideAction.style.display = 'inline-flex';
+    }
+
+    if (key === 'inject') {
+      notifCard.classList.remove('hide');
+      notifEmpty.classList.add('hide');
+    } else {
+      notifCard.classList.add('hide');
+      notifEmpty.classList.remove('hide');
+    }
+  }
+
+  document.getElementById('scenarioList').addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-scene]');
+    if (!btn) return;
+    applyScene(btn.getAttribute('data-scene'));
+  });
+
+  backendBtn.addEventListener('click', function (event) {
+    event.stopPropagation();
+    backendMenu.classList.toggle('hide');
+  });
+
+  backendMenu.addEventListener('click', function (event) {
+    const item = event.target.closest('[data-b]');
+    if (!item) return;
+    backendMenu.classList.add('hide');
+    showToast('演示：仍使用后端 A · 本地识别');
+  });
+
+  document.addEventListener('click', function (event) {
+    if (!event.target.closest('#backendBtn') && !event.target.closest('#backendMenu')) {
+      backendMenu.classList.add('hide');
+    }
+  });
+
+  guideAction.addEventListener('click', function (event) {
+    if (currentScene === 'offline') {
+      event.preventDefault();
+      showToast('演示：已复制 voicerelay.local:8787');
+    }
+  });
+
+  bannerAction.addEventListener('click', function () {
+    if (currentScene === 'permission') {
+      window.location.href = 'settings.html#permission';
+      return;
+    }
+    if (currentScene === 'engine') {
+      showToast('演示：模型加载中，不显示固定进度或预计时间');
+      return;
+    }
+    if (currentScene === 'inject') {
+      showToast('演示：未送达；请检查输入焦点后重新录音');
+      return;
+    }
+    if (currentScene === 'offline') {
+      showToast('演示：已打开配对码');
+      return;
+    }
+    showToast('后端 B 未安装虚拟声卡，可继续使用后端 A');
+  });
+
+  statusTail.addEventListener('click', function () {
+    applyScene(currentScene === 'reconnect' ? 'reconnect' : currentScene);
+    if (currentScene === 'inject') {
+      showToast('演示：未送达，请查看处理建议');
+    } else {
+      showToast('演示：已打开处理面板');
+    }
+  });
+
+  document.getElementById('copyDiagnose').addEventListener('click', function () {
+    showToast('演示诊断信息：版本 1.0.0 · 构建号 1 · 权限 1/3 · 后端 A');
+  });
+
+  document.getElementById('showNotif').addEventListener('click', function () {
+    notifCard.classList.remove('hide');
+    notifEmpty.classList.add('hide');
+    setTimeout(function () {
+      notifCard.classList.add('hide');
+      notifEmpty.classList.remove('hide');
+    }, 5000);
+  });
+
+  let toastTimer = null;
+  function showToast(text) {
+    let el = document.getElementById('sceneToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'sceneToast';
+      el.className = 'toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.style.display = 'block';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.style.display = 'none'; }, 2200);
+  }
+
+  function applyAppearance(mode) {
+    if (mode === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    segButtons.forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-appearance') === mode);
+    });
+    try { localStorage.setItem('vr-appearance', mode); } catch (e) {}
+  }
+  segButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyAppearance(btn.getAttribute('data-appearance'));
+    });
+  });
+
+  let saved = 'system';
+  try { saved = localStorage.getItem('vr-appearance') || 'system'; } catch (e) {}
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyAppearance(saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light'));
+
+  applyScene('permission');
+</script>
+</body>
+</html>

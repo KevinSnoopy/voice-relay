@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>D-09 悬浮电平窗 · VoiceRelay</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --label: #1d1d1f;
+    --label-2: rgba(60, 60, 67, 0.6);
+    --label-3: rgba(60, 60, 67, 0.36);
+    --separator: rgba(60, 60, 67, 0.16);
+    --canvas: #ececea;
+    --window: #ffffff;
+    --panel: #f5f5f4;
+    --accent: #0a6cff;
+    --accent-soft: rgba(10, 108, 255, 0.12);
+    --yellow: #b45309;
+    --yellow-bg: rgba(255, 204, 0, 0.18);
+    --green: #1c8f4a;
+    --red: #d32f2f;
+    --card-ring: rgba(0, 0, 0, 0.07);
+    --wallpaper: linear-gradient(140deg, #c9d6e6 0%, #e5d7e0 50%, #d0e1d4 100%);
+  }
+  html.dark {
+    --label: #f2f2f7;
+    --label-2: rgba(235, 235, 245, 0.62);
+    --label-3: rgba(235, 235, 245, 0.34);
+    --separator: rgba(235, 235, 245, 0.16);
+    --canvas: #131315;
+    --window: #1e1e20;
+    --panel: #262629;
+    --accent: #3d9bff;
+    --accent-soft: rgba(61, 155, 255, 0.18);
+    --yellow: #f0b429;
+    --yellow-bg: rgba(240, 180, 41, 0.14);
+    --green: #43c476;
+    --red: #ff6b60;
+    --card-ring: rgba(255, 255, 255, 0.09);
+    --wallpaper: linear-gradient(140deg, #18212e 0%, #291f27 50%, #16221c 100%);
+  }
+  body {
+    background: var(--canvas);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .t-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .t-body { font-size: 13px; line-height: 1.5; }
+  .t-caption { font-size: 11px; line-height: 1.4; }
+  .muted { color: var(--label-2); }
+  .faint { color: var(--label-3); }
+  .hair-t { border-top: 0.5px solid var(--separator); }
+  .hair-b { border-bottom: 0.5px solid var(--separator); }
+  .frame-card { background: var(--window); border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px var(--card-ring); }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .btn-secondary { background: var(--window); color: var(--label); border: 0.5px solid var(--separator); border-radius: 8px; font-size: 13px; }
+  .seg { background: var(--panel); border-radius: 8px; padding: 2px; display: inline-flex; }
+  .seg-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; color: var(--label-2); }
+  .seg-item.on { background: var(--window); color: var(--label); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .badge { font-size: 11px; line-height: 1; display: inline-flex; align-items: center; gap: 4px; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .hide { display: none !important; }
+  ::-webkit-scrollbar { display: none; }
+  .wallpaper { background: var(--wallpaper); }
+
+  /* 140x44 悬浮窗 */
+  .level-float {
+    width: 140px; height: 44px; border-radius: 10px; display: flex; align-items: center; gap: 3px; padding: 0 10px;
+    background: var(--window); box-shadow: 0 8px 22px rgba(0,0,0,0.24), 0 0 0 0.5px var(--card-ring);
+    opacity: 0; transition: opacity .15s ease;
+    user-select: none;
+  }
+  .level-float.show { opacity: 1; }
+  .level-float.fading { opacity: 0; transition: opacity .8s ease; }
+  .level-float .rb { flex: 1; border-radius: 9999px; background: var(--red); height: 6px; transition: height .08s linear; }
+  .level-float .rec-dot { width: 6px; height: 6px; border-radius: 9999px; background: var(--red); flex-shrink: 0; margin-right: 5px; }
+  .float-drag { cursor: grab; }
+  .float-drag:active { cursor: grabbing; }
+  .ctx-menu { position: absolute; z-index: 60; min-width: 132px; border-radius: 8px; background: var(--window); padding: 4px; box-shadow: 0 10px 28px rgba(0,0,0,0.24), 0 0 0 0.5px var(--card-ring); }
+  .ctx-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border-radius: 5px; font-size: 12px; color: var(--label); text-align: left; }
+  .ctx-item:hover { background: var(--accent); color: #fff; }
+
+  .timeline-track { height: 6px; border-radius: 3px; background: var(--panel); position: relative; overflow: hidden; }
+  .timeline-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--red); border-radius: 3px; transition: width .1s linear; }
+
+  .editor-field { background: var(--window); border-radius: 8px; padding: 14px 16px; box-shadow: 0 0 0 0.5px var(--card-ring); }
+  .caret { display: inline-block; width: 1.5px; height: 16px; background: var(--accent); vertical-align: -3px; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-[1240px] mx-auto px-8 py-8">
+<nav class="flex items-center justify-between mb-6">
+<a class="t-caption muted flex items-center gap-1 hover:opacity-70" href="home.html">
+<iconify-icon icon="solar:alt-arrow-left-linear" style="font-size:13px"></iconify-icon> 画板索引
+      </a>
+<div class="flex items-center gap-3">
+<span class="badge px-2 py-1 rounded-full shrink-0" style="background: var(--yellow-bg); color: var(--yellow); box-shadow: inset 0 0 0 0.5px var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:12px"></iconify-icon>演示数据 · 非实时状态
+</span>
+<div class="seg" id="appearanceSeg">
+<button class="seg-item on" data-appearance="light" type="button">浅色</button>
+<button class="seg-item" data-appearance="dark" type="button">深色</button>
+</div>
+<span class="t-caption faint mono">D-09</span>
+</div>
+</nav>
+<header class="mb-6">
+<h1 class="text-[22px] font-semibold tracking-tight">悬浮电平窗（可选）</h1>
+<p class="t-body muted mt-1 max-w-[760px]">140 × 44，5 根电平条 + 一个红点。电平、识别文本与焦点计数均为本地演示，不读取麦克风，也不操作其他 App。</p>
+</header>
+<div class="grid grid-cols-[1fr_340px] gap-6 items-start">
+<!-- 实景区 -->
+<section class="frame-card p-5">
+<div class="rounded-[10px] wallpaper relative overflow-hidden" id="stage" style="height:520px">
+<!-- 菜单栏 -->
+<div class="h-[26px] flex items-center justify-between px-3" style="background: var(--window); border-bottom: 0.5px solid var(--separator)">
+<span class="t-caption font-semibold">Finder</span>
+<div class="flex items-center gap-2">
+<span class="t-caption faint">􀊫</span>
+<span id="menuGlyph" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px">
+<span style="display:block;width:11px;height:11px;border-radius:9999px;background:var(--label)"></span>
+</span>
+<span class="t-caption muted">周五 14:32</span>
+</div>
+</div>
+<!-- 模拟输入 App 窗口 -->
+<div class="absolute left-[28px] top-[58px] rounded-[10px] overflow-hidden" style="width:430px; background: var(--window); box-shadow: 0 18px 44px rgba(0,0,0,0.22), 0 0 0 0.5px var(--card-ring)">
+<div class="h-[30px] flex items-center gap-2 px-3" style="background: var(--panel); border-bottom: 0.5px solid var(--separator)">
+<span class="w-[10px] h-[10px] rounded-full" style="background:#ff5f57"></span>
+<span class="w-[10px] h-[10px] rounded-full" style="background:#febc2e"></span>
+<span class="w-[10px] h-[10px] rounded-full" style="background:#28c840"></span>
+<span class="t-caption muted ml-3">Notion · 周报草稿</span>
+</div>
+<div class="p-4">
+<div class="t-title">本周进展</div>
+<div class="editor-field mt-3">
+<p class="t-body">这周把 VoiceRelay 的 Mac 端权限链路梳理完了，重点是辅助功能授权后的重启提示。</p>
+<p class="t-body mt-2"><span id="typedText">下周一要给团队演示</span><span class="caret" id="caret"></span></p>
+<p class="t-caption faint mt-3" id="focusNote">模拟光标位置：第 2 行末尾（仅用于页面内演示）</p>
+</div>
+<div class="flex items-center gap-2 mt-3">
+<span class="t-caption faint">本周关键词</span>
+<span class="badge px-2 py-[2px] rounded-full" style="background: var(--panel)">权限</span>
+<span class="badge px-2 py-[2px] rounded-full" style="background: var(--panel)">菜单栏</span>
+<span class="badge px-2 py-[2px] rounded-full" style="background: var(--panel)">延迟</span>
+</div>
+</div>
+</div>
+<!-- 悬浮窗 -->
+<div class="level-float float-drag absolute" id="floatWin" style="left: 340px; top: 300px">
+<span class="rec-dot"></span>
+<i class="rb" style="height:6px"></i>
+<i class="rb" style="height:6px"></i>
+<i class="rb" style="height:6px"></i>
+<i class="rb" style="height:6px"></i>
+<i class="rb" style="height:6px"></i>
+</div>
+<!-- 鼠标示意 -->
+<div class="absolute t-caption faint" id="cursorHint" style="left: 470px; top: 352px">
+<iconify-icon icon="solar:cursor-bold" style="font-size:14px"></iconify-icon>
+</div>
+<!-- 状态浮标 -->
+<div class="absolute left-4 bottom-4 rounded-[8px] px-3 py-2" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="flex items-center gap-3">
+<span class="t-caption muted">悬浮窗 · 演示</span>
+<span class="badge" id="floatStateBadge" style="color: var(--label-2)">隐藏</span>
+<span class="t-caption faint mono" id="floatMeta">opacity 0 · 150 ms</span>
+</div>
+</div>
+<!-- 右键菜单 -->
+<div class="ctx-menu hide" id="floatCtx" style="left: 340px; top: 348px">
+<button class="ctx-item" type="button"><iconify-icon icon="solar:pin-bold" style="font-size:13px"></iconify-icon>固定在当前位置</button>
+<button class="ctx-item" type="button"><iconify-icon icon="solar:refresh-circle-bold" style="font-size:13px"></iconify-icon>回到跟随鼠标</button>
+<div style="height:0.5px;background:var(--separator);margin:4px"></div>
+<button class="ctx-item" id="closeFloat" style="color: var(--red)" type="button"><iconify-icon icon="solar:close-circle-bold" style="font-size:13px"></iconify-icon>关闭电平窗</button>
+</div>
+</div>
+</section>
+<!-- 控制面板 -->
+<aside class="space-y-5">
+<section class="frame-card p-5">
+<h2 class="t-title">演示控制</h2>
+<p class="t-caption muted mt-1">点击「按住说话」播放模拟收音与电平，松手后演示淡出；不会调用麦克风或写入其他 App。</p>
+<button class="w-full mt-3 h-[38px] rounded-[8px] t-body font-medium text-white flex items-center justify-center gap-2" id="holdBtn" style="background: var(--red)" type="button">
+<iconify-icon icon="solar:microphone-2-bold" style="font-size:15px"></iconify-icon>
+<span id="holdBtnText">按住说话</span>
+</button>
+<div class="mt-3">
+<div class="flex items-center justify-between t-caption mb-1"><span class="muted">淡入 / 淡出</span><span class="mono" id="fadeLabel">—</span></div>
+<div class="timeline-track"><div class="timeline-fill" id="fadeFill"></div></div>
+</div>
+<div class="mt-3 grid grid-cols-2 gap-2">
+<button class="btn-secondary py-[6px] text-[12px]" id="toggleFloat" type="button">显示 / 隐藏</button>
+<button class="btn-secondary py-[6px] text-[12px]" id="resetPos" type="button">回到跟随鼠标</button>
+</div>
+<div class="mt-2">
+<button class="w-full btn-secondary py-[6px] text-[12px]" id="simulateClose" type="button">模拟右键 → 关闭</button>
+</div>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">不抢焦点验证</h2>
+<div class="mt-2 rounded-[8px] p-3" style="background: var(--panel)">
+<p class="t-caption muted mb-2">先在输入框里点一下，再按住「按住说话」。失焦计数应保持 0。</p>
+<input class="field-input-style w-full rounded-[6px] px-2 py-[6px] t-body outline-none" id="probe" style="background: var(--window); border: 0.5px solid var(--separator); color: var(--label)" value="正在输入的内容…"/>
+<div class="flex items-center justify-between mt-2">
+<span class="t-caption faint">失焦次数</span>
+<span class="t-caption mono" id="blurCount" style="color: var(--green)">0</span>
+</div>
+</div>
+<p class="t-caption faint mt-2">此处只验证页面内焦点；不读取系统光标，也不操作其他 App。</p>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">规格</h2>
+<div class="mt-2 space-y-[6px]">
+<div class="flex items-center justify-between t-caption"><span class="muted">尺寸</span><span class="mono">140 × 44</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">电平条</span><span class="mono">5 根 + 1 红点</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">出现</span><span class="mono">淡入 150 ms</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">消失</span><span class="mono">淡出 800 ms</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">位置</span><span class="mono">跟随鼠标 · 记住</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">Mission Control</span><span class="mono">不参与</span></div>
+</div>
+<div class="mt-3 rounded-[8px] p-2" style="background: var(--yellow-bg)">
+<p class="t-caption" style="color: var(--yellow)">设计目标：页面内不抢焦点；真实系统行为需在 App 中验证。</p>
+</div>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">尺寸标注</h2>
+<div class="mt-3 flex items-center justify-center">
+<div class="relative" style="width:196px;height:92px;border:1px dashed var(--label-3);border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--panel)">
+<div style="width:140px;height:44px;border-radius:10px;border:1px solid var(--accent);display:flex;align-items:center;padding:0 10px;gap:3px">
+<span style="width:6px;height:6px;border-radius:9999px;background:var(--red)"></span>
+<i style="flex:1;height:6px;border-radius:9999px;background:var(--red)"></i>
+<i style="flex:1;height:16px;border-radius:9999px;background:var(--red)"></i>
+<i style="flex:1;height:10px;border-radius:9999px;background:var(--red)"></i>
+<i style="flex:1;height:20px;border-radius:9999px;background:var(--red)"></i>
+<i style="flex:1;height:8px;border-radius:9999px;background:var(--red)"></i>
+</div>
+<span class="t-caption mono" style="position:absolute;bottom:3px;right:4px;color:var(--label-3)">140 × 44</span>
+</div>
+</div>
+<p class="t-caption faint mt-2">圆角 10，层级为浮动窗口，不参与 Mission Control。</p>
+</section>
+</aside>
+</div>
+<footer class="hair-t mt-8 pt-5 flex items-center justify-between t-caption faint">
+<a class="hover:opacity-70" href="onboarding.html">← D-08 首次向导</a>
+<a class="hover:opacity-70" href="states.html" style="color: var(--accent)">D-10 异常态 →</a>
+</footer>
+</div>
+<script>
+  const root = document.documentElement;
+  const segButtons = document.querySelectorAll('#appearanceSeg [data-appearance]');
+
+  const stage = document.getElementById('stage');
+  const floatWin = document.getElementById('floatWin');
+  const floatCtx = document.getElementById('floatCtx');
+  const floatStateBadge = document.getElementById('floatStateBadge');
+  const floatMeta = document.getElementById('floatMeta');
+  const holdBtn = document.getElementById('holdBtn');
+  const holdBtnText = document.getElementById('holdBtnText');
+  const fadeFill = document.getElementById('fadeFill');
+  const fadeLabel = document.getElementById('fadeLabel');
+  const menuGlyph = document.getElementById('menuGlyph');
+  const probe = document.getElementById('probe');
+  const blurCountEl = document.getElementById('blurCount');
+  const typedText = document.getElementById('typedText');
+  const cursorHint = document.getElementById('cursorHint');
+
+  const phrase = '下周一要给团队演示';
+  let visible = true;
+  let recording = false;
+  let levelTimer = null;
+  let hideTimer = null;
+  let blurCount = 0;
+  let dragState = null;
+
+  function setMenuGlyph(state) {
+    if (state === 'recording') {
+      menuGlyph.innerHTML = '<span style="display:inline-flex;gap:2px;align-items:center"><i style="display:block;width:2px;height:7px;background:var(--red);border-radius:2px"></i><i style="display:block;width:2px;height:12px;background:var(--red);border-radius:2px"></i><i style="display:block;width:2px;height:8px;background:var(--red);border-radius:2px"></i></span>';
+    } else {
+      menuGlyph.innerHTML = '<span style="display:block;width:11px;height:11px;border-radius:9999px;background:var(--label)"></span>';
+    }
+  }
+
+  function setStateBadge(text, color) {
+    floatStateBadge.textContent = text;
+    floatStateBadge.style.color = color;
+  }
+
+  function showFloat(animate) {
+    clearTimeout(hideTimer);
+    floatWin.classList.remove('fading');
+    visible = true;
+    if (animate === false) {
+      floatWin.style.transition = 'none';
+      floatWin.classList.add('show');
+      floatMeta.textContent = 'opacity 1 · 150 ms';
+      setTimeout(function () { floatWin.style.transition = ''; }, 30);
+    } else {
+      floatWin.classList.add('show');
+      floatMeta.textContent = '淡入中 · 150 ms';
+      setTimeout(function () { floatMeta.textContent = 'opacity 1 · 150 ms'; }, 160);
+    }
+    setStateBadge('收音中', 'var(--red)');
+  }
+
+  function hideFloat() {
+    floatWin.classList.add('fading');
+    floatMeta.textContent = '淡出中 · 800 ms';
+    setStateBadge('隐藏', 'var(--label-2)');
+    hideTimer = setTimeout(function () {
+      visible = false;
+      floatWin.classList.remove('show');
+      floatMeta.textContent = 'opacity 0 · 800 ms';
+    }, 800);
+  }
+
+  function startLevels() {
+    stopLevels();
+    const bars = floatWin.querySelectorAll('.rb');
+    levelTimer = setInterval(function () {
+      const t = Date.now() / 160;
+      bars.forEach(function (bar, i) {
+        bar.style.height = Math.max(3, Math.abs(Math.sin(t + i * 0.9)) * 22 + 6) + 'px';
+      });
+    }, 80);
+  }
+
+  function stopLevels() {
+    if (levelTimer) {
+      clearInterval(levelTimer);
+      levelTimer = null;
+    }
+    floatWin.querySelectorAll('.rb').forEach(function (bar) { bar.style.height = '3px'; });
+  }
+
+  function startRecording() {
+    if (recording) return;
+    recording = true;
+    holdBtnText.textContent = '松开结束';
+    holdBtn.style.background = 'var(--label)';
+    showFloat(true);
+    startLevels();
+    setMenuGlyph('recording');
+    typedText.textContent = phrase;
+    fadeFill.style.width = '15%';
+    fadeLabel.textContent = '淡入 150 ms';
+  }
+
+  function stopRecording() {
+    if (!recording) return;
+    recording = false;
+    holdBtnText.textContent = '按住说话';
+    holdBtn.style.background = 'var(--red)';
+    stopLevels();
+    setMenuGlyph('connected');
+    fadeFill.style.width = '100%';
+    fadeLabel.textContent = '淡出 800 ms';
+    hideFloat();
+    typedText.textContent = phrase + '，重点讲权限部分。';
+    setTimeout(function () { fadeFill.style.width = '0%'; fadeLabel.textContent = '—'; }, 1000);
+  }
+
+  holdBtn.addEventListener('mousedown', function (event) {
+    event.preventDefault();
+    startRecording();
+  });
+  holdBtn.addEventListener('mouseup', function () { stopRecording(); });
+  holdBtn.addEventListener('mouseleave', function () { if (recording) stopRecording(); });
+
+  holdBtn.addEventListener('touchstart', function (event) {
+    event.preventDefault();
+    startRecording();
+  }, { passive: false });
+  holdBtn.addEventListener('touchend', function (event) {
+    event.preventDefault();
+    stopRecording();
+  }, { passive: false });
+
+  holdBtn.addEventListener('click', function () {
+    // 键盘或触摸已被处理时避免重复触发
+    if (!recording && !visible) {
+      startRecording();
+      setTimeout(function () { stopRecording(); }, 1400);
+    }
+  });
+
+  document.getElementById('toggleFloat').addEventListener('click', function () {
+    if (recording) return;
+    if (visible && floatWin.classList.contains('show')) {
+      hideFloat();
+    } else {
+      showFloat(true);
+      startLevels();
+      setMenuGlyph('recording');
+      setTimeout(function () {
+        if (visible) {
+          stopLevels();
+          hideFloat();
+          setMenuGlyph('connected');
+        }
+      }, 1800);
+    }
+  });
+
+  document.getElementById('resetPos').addEventListener('click', function () {
+    floatWin.style.left = '340px';
+    floatWin.style.top = '300px';
+    cursorHint.style.left = '470px';
+    cursorHint.style.top = '352px';
+    showFloat(true);
+    setTimeout(function () { if (!recording) hideFloat(); }, 900);
+  });
+
+  function closeFloatMenu() {
+    floatCtx.classList.add('hide');
+  }
+
+  document.getElementById('simulateClose').addEventListener('click', function () {
+    floatCtx.classList.remove('hide');
+  });
+
+  document.getElementById('closeFloat').addEventListener('click', function () {
+    closeFloatMenu();
+    floatWin.classList.remove('show');
+    visible = false;
+    typeof setStateBadge === 'function' && setStateBadge('已关闭', 'var(--label-3)');
+    floatMeta.textContent = '用户关闭 · 下次收音仍会出现';
+  });
+
+  floatWin.addEventListener('contextmenu', function (event) {
+    event.preventDefault();
+    const rect = stage.getBoundingClientRect();
+    floatCtx.style.left = Math.max(8, Math.min(event.clientX - rect.left, rect.width - 148)) + 'px';
+    floatCtx.style.top = Math.max(8, Math.min(event.clientY - rect.top, rect.height - 116)) + 'px';
+    floatCtx.classList.remove('hide');
+  });
+
+  // 拖动
+  const stageRect = function () { return stage.getBoundingClientRect(); };
+  floatWin.addEventListener('mousedown', function (event) {
+    if (event.button !== 0) return;
+    const rect = stageRect();
+    dragState = {
+      startX: event.clientX,
+      startY: event.clientY,
+      left: parseFloat(floatWin.style.left) || 340,
+      top: parseFloat(floatWin.style.top) || 300,
+      width: rect.width,
+      height: rect.height
+    };
+    event.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function (event) {
+    if (!dragState) return;
+    const dx = event.clientX - dragState.startX;
+    const dy = event.clientY - dragState.startY;
+    const left = Math.max(8, Math.min(dragState.left + dx, dragState.width - 148));
+    const top = Math.max(34, Math.min(dragState.top + dy, dragState.height - 52));
+    floatWin.style.left = left + 'px';
+    floatWin.style.top = top + 'px';
+    cursorHint.style.left = (left + 130) + 'px';
+    cursorHint.style.top = (top + 52) + 'px';
+  });
+
+  document.addEventListener('mouseup', function () {
+    if (!dragState) return;
+    dragState = null;
+  });
+
+  document.addEventListener('click', function (event) {
+    if (!event.target.closest('#floatCtx') && !event.target.closest('#simulateClose')) {
+      closeFloatMenu();
+    }
+  });
+
+  probe.addEventListener('blur', function () {
+    blurCount += 1;
+    blurCountEl.textContent = String(blurCount);
+    blurCountEl.style.color = 'var(--red)';
+  });
+
+  function applyAppearance(mode) {
+    if (mode === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    segButtons.forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-appearance') === mode);
+    });
+    try { localStorage.setItem('vr-appearance', mode); } catch (e) {}
+  }
+  segButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyAppearance(btn.getAttribute('data-appearance'));
+    });
+  });
+
+  let saved = 'system';
+  try { saved = localStorage.getItem('vr-appearance') || 'system'; } catch (e) {}
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyAppearance(saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light'));
+
+  setMenuGlyph('connected');
+  setStateBadge('隐藏', 'var(--label-2)');
+  floatMeta.textContent = 'opacity 0 · 等待收音';
+  floatWin.classList.remove('show');
+  visible = false;
+</script>
+</body>
+</html>

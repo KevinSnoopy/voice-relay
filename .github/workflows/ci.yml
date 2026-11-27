@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS build & tests
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: sw_vers && swift --version
+
+      - name: Fetch sherpa-onnx runtime
+        run: ./mac/scripts/fetch-deps.sh
+
+      - name: Build
+        run: cd mac && swift build
+
+      - name: Test
+        run: cd mac && swift test
+
+  flutter:
+    name: Flutter analyze & tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/voicerelay
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.38.9
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test

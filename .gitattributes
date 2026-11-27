@@ -1,0 +1,16 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.icns binary
+*.dylib binary
+*.a binary
+*.jar binary
+*.onnx binary
+*.tar.bz2 binary
+*.dmg binary
+*.apk binary
+
+mac/vendor/WebRTC.xcframework/** binary

@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>设置 · VoiceRelay</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --label: #1d1d1f;
+    --label-2: rgba(60, 60, 67, 0.6);
+    --label-3: rgba(60, 60, 67, 0.36);
+    --separator: rgba(60, 60, 67, 0.16);
+    --canvas: #ececea;
+    --window: #ffffff;
+    --panel: #f5f5f4;
+    --sidebar: #ededea;
+    --field: #ffffff;
+    --accent: #0a6cff;
+    --accent-soft: rgba(10, 108, 255, 0.12);
+    --yellow: #b45309;
+    --yellow-bg: rgba(255, 204, 0, 0.18);
+    --green: #1c8f4a;
+    --red: #d32f2f;
+    --card-ring: rgba(0, 0, 0, 0.07);
+  }
+  html.dark {
+    --label: #f2f2f7;
+    --label-2: rgba(235, 235, 245, 0.62);
+    --label-3: rgba(235, 235, 245, 0.34);
+    --separator: rgba(235, 235, 245, 0.16);
+    --canvas: #131315;
+    --window: #1e1e20;
+    --panel: #262629;
+    --sidebar: #19191b;
+    --field: #2c2c2f;
+    --accent: #3d9bff;
+    --accent-soft: rgba(61, 155, 255, 0.18);
+    --yellow: #f0b429;
+    --yellow-bg: rgba(240, 180, 41, 0.14);
+    --green: #43c476;
+    --red: #ff6b60;
+    --card-ring: rgba(255, 255, 255, 0.09);
+  }
+  body {
+    background: var(--canvas);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .t-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .t-body { font-size: 13px; line-height: 1.5; }
+  .t-caption { font-size: 11px; line-height: 1.4; }
+  .muted { color: var(--label-2); }
+  .faint { color: var(--label-3); }
+  .hair-t { border-top: 0.5px solid var(--separator); }
+  .hair-b { border-bottom: 0.5px solid var(--separator); }
+  .frame-card { background: var(--window); border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px var(--card-ring); }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .btn-secondary { background: var(--window); color: var(--label); border: 0.5px solid var(--separator); border-radius: 8px; font-size: 13px; }
+  .seg { background: var(--panel); border-radius: 8px; padding: 2px; display: inline-flex; }
+  .seg-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; color: var(--label-2); }
+  .seg-item.on { background: var(--window); color: var(--label); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .badge { font-size: 11px; line-height: 1; display: inline-flex; align-items: center; gap: 4px; }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .hide { display: none !important; }
+  ::-webkit-scrollbar { display: none; }
+
+  /* 设置窗口：720x520 */
+  .settings-win {
+    width: 720px; height: 520px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+    background: var(--window); box-shadow: 0 26px 64px rgba(0,0,0,0.28), 0 0 0 0.5px var(--card-ring);
+  }
+  .win-title { height: 38px; flex-shrink: 0; display: flex; align-items: center; padding: 0 14px; background: var(--window); border-bottom: 0.5px solid var(--separator); position: relative; }
+  .traffic { display: flex; gap: 6px; }
+  .traffic span { width: 11px; height: 11px; border-radius: 9999px; display: block; }
+  .win-body { flex: 1; min-height: 0; display: flex; }
+  .sidebar { width: 168px; flex-shrink: 0; background: var(--sidebar); padding: 10px 8px; overflow-y: auto; transition: width .2s ease; }
+  .settings-win.compact .sidebar { width: 52px; padding: 10px 6px; }
+  .settings-win.compact .side-item { justify-content: center; padding: 0; gap: 0; }
+  .settings-win.compact .side-item .side-label { display: none; }
+  .side-item { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; font-size: 13px; color: var(--label); margin-bottom: 2px; width: 100%; text-align: left; }
+  .side-item iconify-icon { color: var(--label-2); }
+  .side-item:hover { background: rgba(0,0,0,0.05); }
+  html.dark .side-item:hover { background: rgba(255,255,255,0.06); }
+  .side-item.on { background: var(--accent); color: #fff; }
+  .side-item.on iconify-icon { color: #fff; }
+  .content { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 18px 20px 20px; }
+  .content-col { max-width: 520px; min-width: 0; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; }
+  .row > div:first-child { min-width: 0; }
+  .row-title { font-size: 13px; line-height: 1.4; }
+  .row-desc { font-size: 11px; color: var(--label-2); line-height: 1.4; }
+  .group { border-radius: 10px; background: var(--panel); padding: 2px 12px; margin-bottom: 16px; }
+  .group > .row + .row { border-top: 0.5px solid var(--separator); }
+  .settings-win.compact .popup-select { min-width: 118px; }
+  .settings-win.compact .slider { width: 104px; }
+
+  .switch { width: 32px; height: 20px; border-radius: 9999px; background: var(--label-3); position: relative; transition: background .2s ease; flex-shrink: 0; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 9999px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .2s ease; }
+  .switch.on { background: var(--accent); }
+  .switch.on::after { transform: translateX(12px); }
+  .switch.disabled { opacity: .4; }
+
+  .popup-select { display: inline-flex; align-items: center; justify-content: space-between; gap: 14px; min-width: 148px; height: 24px; padding: 0 7px; border-radius: 6px; border: 0.5px solid var(--separator); background: var(--field); font-size: 12px; }
+  .radio-dot { width: 14px; height: 14px; border-radius: 9999px; border: 1px solid var(--label-3); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .radio-dot.on { border-color: var(--accent); background: var(--accent); }
+  .radio-dot.on::after { content: ""; width: 5px; height: 5px; border-radius: 9999px; background: #fff; display: block; }
+
+  /* 权限卡 96 */
+  .perm-card { height: 96px; border-radius: 10px; background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring); padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 10px; }
+  .perm-card.warn { background: var(--yellow-bg); box-shadow: 0 0 0 1px rgba(180, 83, 9, 0.28); }
+  html.dark .perm-card.warn { box-shadow: 0 0 0 1px rgba(240, 180, 41, 0.35); }
+  .perm-status { font-size: 11px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 9999px; background: var(--panel); }
+  .perm-why { overflow: hidden; max-height: 0; transition: max-height .2s ease; }
+  .perm-why.open { max-height: 120px; }
+  .perm-block { margin-bottom: 4px; }
+
+  .field-input { height: 24px; border-radius: 6px; border: 0.5px solid var(--separator); background: var(--field); padding: 0 8px; font-size: 12px; width: 100%; color: var(--label); }
+  select.field-input { -webkit-appearance: none; appearance: none; }
+
+  .slider { -webkit-appearance: none; appearance: none; width: 150px; height: 3px; border-radius: 2px; background: var(--separator); outline: none; }
+  .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 9999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 0 0 0.5px rgba(0,0,0,.15); }
+
+  .drag-tag { cursor: grab; color: var(--label-3); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 6px; background: var(--window); border: 0.5px solid var(--separator); font-size: 12px; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 8px 14px; border-radius: 8px; background: rgba(30,30,32,0.94); color: #fff; font-size: 12px; z-index: 99; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .qr-mini { background:
+      repeating-linear-gradient(90deg, var(--label) 0 2px, transparent 2px 4px),
+      repeating-linear-gradient(0deg, var(--label) 0 2px, transparent 2px 4px);
+    opacity: .8; }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-[1240px] mx-auto px-8 py-8">
+<nav class="flex items-center justify-between mb-6">
+<a class="t-caption muted flex items-center gap-1 hover:opacity-70" href="home.html">
+<iconify-icon icon="solar:alt-arrow-left-linear" style="font-size:13px"></iconify-icon> 画板索引
+      </a>
+<div class="flex items-center gap-3">
+<span class="badge px-2 py-1 rounded-full shrink-0" style="background: var(--yellow-bg); color: var(--yellow); box-shadow: inset 0 0 0 0.5px var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:12px"></iconify-icon>演示数据 · 非实时状态
+</span>
+<div class="seg">
+<button class="seg-item" id="winNarrow" type="button">680 × 480</button>
+<button class="seg-item on" id="winBase" type="button">720 × 520</button>
+</div>
+<div class="seg" id="appearanceSeg">
+<button class="seg-item on" data-appearance="light" type="button">浅色</button>
+<button class="seg-item" data-appearance="dark" type="button">深色</button>
+</div>
+<span class="t-caption faint mono">D-05 / D-06 / D-07</span>
+</div>
+</nav>
+<header class="mb-6 flex items-end justify-between gap-6">
+<div>
+<h1 class="text-[22px] font-semibold tracking-tight">VoiceRelay 设置</h1>
+<p class="t-body muted mt-1 max-w-[720px]">左 6 个分区、右内容区。默认 720 × 520，最小 680 × 480。设置、权限与连接均为演示，不读取或修改真实系统。</p>
+</div>
+<div class="t-caption" id="sizeHint" style="color: var(--accent)">当前：720 × 520</div>
+</header>
+<div class="grid grid-cols-[1fr_320px] gap-6 items-start">
+<!-- 设置窗口 -->
+<section class="frame-card p-5 flex justify-center">
+<div class="settings-win" id="settingsWin" style="width:720px;height:520px">
+<div class="win-title">
+<div class="traffic">
+<span style="background:#ff5f57"></span>
+<span style="background:#febc2e"></span>
+<span style="background:#28c840"></span>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 t-body font-medium">VoiceRelay 设置</div>
+</div>
+<div class="win-body">
+<!-- 侧栏 -->
+<div class="sidebar" id="settingsSidebar">
+<button class="side-item" data-tab="general" type="button">
+<iconify-icon icon="solar:settings-bold" style="font-size:14px"></iconify-icon><span class="side-label">通用</span>
+</button>
+<button class="side-item" data-tab="connection" type="button">
+<iconify-icon icon="solar:smartphone-2-bold" style="font-size:14px"></iconify-icon><span class="side-label">连接</span>
+</button>
+<button class="side-item" data-tab="voice" type="button">
+<iconify-icon icon="solar:microphone-3-bold" style="font-size:14px"></iconify-icon><span class="side-label">语音</span>
+</button>
+<button class="side-item" data-tab="keys" type="button">
+<iconify-icon icon="solar:keyboard-bold" style="font-size:14px"></iconify-icon><span class="side-label">按键</span>
+</button>
+<button class="side-item" data-tab="permission" type="button">
+<iconify-icon icon="solar:shield-keyhole-bold" style="font-size:14px"></iconify-icon><span class="side-label">权限</span>
+</button>
+<button class="side-item" data-tab="about" type="button">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:14px"></iconify-icon><span class="side-label">关于</span>
+</button>
+</div>
+<!-- 内容区 -->
+<div class="content" id="settingsContent">
+<!-- 通用 -->
+<div class="tab-panel" data-panel="general">
+<div class="content-col">
+<h2 class="t-title mb-3">通用</h2>
+<div class="group">
+<div class="row">
+<div>
+<div class="row-title">开机自启</div>
+<div class="row-desc">登录后自动驻留菜单栏</div>
+</div>
+<button aria-label="开机自启" class="switch on" data-switch="launchAtLogin" type="button"></button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">显示悬浮电平窗</div>
+<div class="row-desc">收音时在鼠标附近显示 140 × 44 电平窗</div>
+</div>
+<button aria-label="显示悬浮电平窗" class="switch" data-switch="levelWindow" type="button"></button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">菜单栏图标样式</div>
+<div class="row-desc">Template Image，随系统自动反色</div>
+</div>
+<button class="popup-select" data-popup="iconStyle" type="button">
+<span>跟随系统</span>
+<iconify-icon icon="solar:alt-arrow-up-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">语言</div>
+<div class="row-desc">当前版本仅提供中文</div>
+</div>
+<button class="popup-select" style="opacity:.7" type="button">
+<span>简体中文</span>
+<iconify-icon icon="solar:alt-arrow-up-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+</div>
+</div>
+<p class="t-caption faint">此原型仅切换界面状态，不保存设置，也不连接系统或账号。</p>
+</div>
+</div>
+<!-- 连接 -->
+<div class="tab-panel hide" data-panel="connection">
+<div class="content-col">
+<h2 class="t-title mb-3">连接 · 演示</h2>
+<p class="t-caption muted mb-3">设备、地址、延迟与连接状态均为示例，不连接真实手机或网络。</p>
+<div class="group">
+<div class="row">
+<div>
+<div class="row-title">当前设备（演示）</div>
+<div class="row-desc">iPhone 15 Pro · 局域网 18 ms</div>
+</div>
+<span class="badge" style="color: var(--green)"><iconify-icon icon="solar:check-circle-bold" style="font-size:13px"></iconify-icon>已连接（演示）</span>
+</div>
+<div class="row">
+<div>
+<div class="row-title">配对列表（演示）</div>
+<div class="row-desc">2 台示例设备，最近一次 14:31</div>
+</div>
+<button class="btn-secondary px-3 py-[4px] text-[12px]" data-toast="已打开配对列表" type="button">管理</button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">端口</div>
+<div class="row-desc">监听地址 0.0.0.0:8787（只读）</div>
+</div>
+<span class="t-caption mono muted">8787</span>
+</div>
+</div>
+<div class="rounded-[10px] p-3 flex items-center gap-3 mb-4" style="background: var(--panel)">
+<div class="w-[54px] h-[54px] rounded-[4px] qr-mini shrink-0"></div>
+<div class="flex-1">
+<p class="t-body">重新生成配对码</p>
+<p class="t-caption muted">配对码轮换仅用于新设备配对；旧设备密钥仍有效。</p>
+</div>
+<button class="btn-secondary px-3 py-[5px] text-[12px]" id="regenPair" type="button">生成</button>
+</div>
+<div class="group">
+<div class="row">
+<div>
+<div class="row-title">备用通道（蓝牙）</div>
+<div class="row-desc">网络备用通道；GATT 订阅只显示「手机已订阅·待认证」</div>
+</div>
+<button aria-label="备用通道" class="switch on" data-switch="btChannel" type="button"></button>
+</div>
+</div>
+<p class="t-caption faint mb-3">蓝牙订阅不等同已认证连接，也不代表可以开始传输。</p>
+<p class="t-caption faint" id="pairFeedback">重新生成后显示演示配对码；无有效期，旧设备密钥仍有效。</p>
+</div>
+</div>
+<!-- 语音 -->
+<div class="tab-panel hide" data-panel="voice">
+<div class="content-col">
+<h2 class="t-title mb-3">语音</h2>
+<div class="group">
+<div class="row">
+<div>
+<div class="row-title">后端选择</div>
+<div class="row-desc">仅检出虚拟声卡不代表 B 已可用，仍需确认输入监控与输入法状态</div>
+</div>
+<div class="relative">
+<button class="popup-select" id="voiceBackend" type="button">
+<span id="voiceBackendText">A · 本地识别</span>
+<iconify-icon icon="solar:alt-arrow-up-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+<div class="hide absolute right-0 top-[28px] w-[220px] rounded-[8px] p-1 z-20" id="voiceBackendMenu" style="background: var(--window); box-shadow: 0 12px 30px rgba(0,0,0,0.22), 0 0 0 0.5px var(--card-ring)">
+<button class="ctx-item w-full text-left px-2 py-[6px] rounded-[5px] t-body" data-vbackend="A" type="button">A · 本地识别</button>
+<div class="px-2 py-[6px] rounded-[5px] opacity-45" title="虚拟声卡未检出；仅检出设备也不代表后端 B 已可用">
+<span class="t-body block">B · 输入法</span>
+<span class="t-caption block">虚拟声卡未检出 · 仍需确认可用</span>
+</div>
+</div>
+</div>
+</div>
+<div class="row">
+<div>
+<div class="row-title">模型选择</div>
+<div class="row-desc">SenseVoice Small（int8）· 约 230 MB（演示选项）</div>
+</div>
+<button class="popup-select" id="modelSelect" type="button">
+<span id="modelText">SenseVoice Small</span>
+<iconify-icon icon="solar:alt-arrow-up-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">灵敏度</div>
+<div class="row-desc">过低会漏掉轻声开头</div>
+</div>
+<div class="flex items-center gap-2">
+<input class="slider" id="sensRange" max="100" min="0" type="range" value="62"/>
+<span class="t-caption mono muted w-[26px] text-right" id="sensValue">62</span>
+</div>
+</div>
+<div class="row">
+<div>
+<div class="row-title">松手延迟</div>
+<div class="row-desc">松手后保留的尾部时长</div>
+</div>
+<button class="popup-select" id="tailDelay" type="button">
+<span id="tailDelayText">180 ms</span>
+<iconify-icon icon="solar:alt-arrow-up-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">最长录音时长</div>
+<div class="row-desc">超时后结束录音；发送结果仍需确认上屏</div>
+</div>
+<button class="popup-select" id="maxRecord" type="button">
+<span id="maxRecordText">60 秒</span>
+<iconify-icon icon="solar:alt-arrow-up-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+</div>
+</div>
+<div class="rounded-[8px] p-3" style="background: var(--yellow-bg)">
+<p class="t-caption flex items-start gap-2" style="color: var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:13px;margin-top:1px"></iconify-icon>
+<span>此处仅展示模型加载与切换状态，不执行真实加载，也不承诺固定加载进度。</span>
+</p>
+</div>
+</div>
+</div>
+<!-- 按键 -->
+<div class="tab-panel hide" data-panel="keys">
+<div class="content-col">
+<h2 class="t-title mb-3">按键</h2>
+<p class="t-caption muted mb-3">App 切换直接激活所有正在运行的 App，不弹出系统切换条，也不再维护白名单。</p>
+<div class="group">
+<div class="row">
+<div>
+<div class="row-title">焦点切换是否回退 Tab</div>
+<div class="row-desc">注入后是否把焦点还原到原来的输入框</div>
+</div>
+<button aria-label="焦点回退" class="switch on" data-switch="tabRestore" type="button"></button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">回车行为</div>
+<div class="row-desc">发送后是否自动回车（演示设置）</div>
+</div>
+<button class="popup-select" id="enterBehavior" type="button">
+<span id="enterBehaviorText">不回车</span>
+<iconify-icon icon="solar:alt-arrow-up-down-linear" style="font-size:11px;color:var(--label-3)"></iconify-icon>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 权限 -->
+<div class="tab-panel hide" data-panel="permission">
+<div class="content-col">
+<div class="flex items-center justify-between mb-2">
+<h2 class="t-title">权限</h2>
+<div class="seg" id="permSeg">
+<button class="seg-item on" data-permmode="all" type="button">三态总览</button>
+<button class="seg-item" data-permmode="restart" type="button">需重启</button>
+<button class="seg-item" data-permmode="alloff" type="button">全部未授权</button>
+</div>
+</div>
+<p class="t-caption muted mb-3">以下为预设权限状态，不读取系统。真实 App 每 2 秒刷新权限；本页仅用上方按钮切换演示状态。</p>
+<div class="perm-block">
+<div class="perm-card" data-perm="accessibility">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-body font-medium" data-perm-title="">辅助功能</div>
+<div class="t-caption muted mt-[2px]">用于把文字写进其他 App 的输入框</div>
+</div>
+<span class="perm-status" data-perm-status=""></span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button class="btn-secondary px-[8px] py-[3px] text-[11px]" data-perm-action="" type="button">模拟打开系统设置</button>
+<button class="t-caption hidden" data-perm-restart="" style="color: var(--accent)" type="button">模拟重启</button>
+</div>
+<button class="t-caption flex items-center gap-1 hover:opacity-70" data-why-toggle="" style="color: var(--label-2)" type="button">
+                          为什么需要这个权限？
+                          <iconify-icon data-why-chev="" icon="solar:alt-arrow-down-linear" style="font-size:11px"></iconify-icon>
+</button>
+</div>
+</div>
+<div class="perm-why px-2" data-why="">
+<p class="t-caption muted py-1">VoiceRelay 需要把识别出的文字直接写进你正在用的 App，而不是只放在剪贴板里让你手动粘贴。macOS 把这一能力收在「辅助功能」里，授权后就相当于你允许它代替你敲键盘。</p>
+</div>
+</div>
+<div class="perm-block">
+<div class="perm-card" data-perm="inputMonitoring">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-body font-medium" data-perm-title="">输入监控</div>
+<div class="t-caption muted mt-[2px]">仅「输入法后端」需要，用于触发输入法语音键</div>
+</div>
+<span class="perm-status" data-perm-status=""></span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button class="btn-secondary px-[8px] py-[3px] text-[11px]" data-perm-action="" type="button">模拟打开系统设置</button>
+<button class="t-caption hidden" data-perm-restart="" style="color: var(--accent)" type="button">模拟重启</button>
+</div>
+<button class="t-caption flex items-center gap-1 hover:opacity-70" data-why-toggle="" style="color: var(--label-2)" type="button">
+                          为什么需要这个权限？
+                          <iconify-icon data-why-chev="" icon="solar:alt-arrow-down-linear" style="font-size:11px"></iconify-icon>
+</button>
+</div>
+</div>
+<div class="perm-why px-2" data-why="">
+<p class="t-caption muted py-1">只有在你把后端切到「B · 输入法」时才需要它：VoiceRelay 要模拟按下输入法的语音键，才能让文字走系统输入法通道。只用本地识别（后端 A）时可以完全跳过。</p>
+</div>
+</div>
+<div class="perm-block">
+<div class="perm-card" data-perm="bluetooth">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-body font-medium" data-perm-title="">蓝牙</div>
+<div class="t-caption muted mt-[2px]">网络不通时用蓝牙传输语音</div>
+</div>
+<span class="perm-status" data-perm-status=""></span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button class="btn-secondary px-[8px] py-[3px] text-[11px]" data-perm-action="" type="button">模拟打开系统设置</button>
+<button class="t-caption hidden" data-perm-restart="" style="color: var(--accent)" type="button">模拟重启</button>
+</div>
+<button class="t-caption flex items-center gap-1 hover:opacity-70" data-why-toggle="" style="color: var(--label-2)" type="button">
+                          为什么需要这个权限？
+                          <iconify-icon data-why-chev="" icon="solar:alt-arrow-down-linear" style="font-size:11px"></iconify-icon>
+</button>
+</div>
+</div>
+<div class="perm-why px-2" data-why="">
+<p class="t-caption muted py-1">公司网络或访客 Wi-Fi 常常禁止设备互访，这时可用蓝牙备用通道。GATT 订阅只显示「手机已订阅·待认证」，仍需认证后才能传输。</p>
+</div>
+</div>
+<div class="hide rounded-[8px] px-3 py-2 mb-3 t-caption" id="permInline" style="background: var(--panel)"></div>
+<div class="hair-t pt-3 flex items-center justify-between">
+<p class="t-caption muted">真实 App 每 2 秒刷新权限；<button class="underline" id="recheckBtn" style="color: var(--accent)" type="button">此处仅演示反馈</button></p>
+<button class="btn-primary px-3 py-[5px]" id="permDone" type="button">完成演示</button>
+</div>
+</div>
+</div>
+<!-- 关于 -->
+<div class="tab-panel hide" data-panel="about">
+<div class="content-col">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center" style="background: var(--accent)">
+<iconify-icon icon="solar:microphone-3-bold" style="font-size:22px;color:#fff"></iconify-icon>
+</div>
+<div>
+<h2 class="t-title">VoiceRelay</h2>
+<p class="t-caption muted">版本 1.0.0 · 构建号 1</p>
+</div>
+</div>
+<div class="group">
+<div class="row">
+<div>
+<div class="row-title">日志目录</div>
+<div class="row-desc mono">~/Library/Logs/VoiceRelay</div>
+</div>
+<button class="btn-secondary px-3 py-[4px] text-[12px]" data-toast="已在访达中打开日志目录" type="button">打开</button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">导出诊断</div>
+<div class="row-desc">打包最近 24 小时日志，自动隐去文本内容</div>
+</div>
+<button class="btn-secondary px-3 py-[4px] text-[12px]" data-toast="诊断包已导出到桌面" type="button">导出</button>
+</div>
+<div class="row">
+<div>
+<div class="row-title">开源许可</div>
+<div class="row-desc">sherpa-onnx · Apache-2.0 / SwiftUI · Apple</div>
+</div>
+<button class="t-caption" data-toast="已打开开源许可清单" style="color: var(--accent)" type="button">查看</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 说明侧栏 -->
+<aside class="space-y-5">
+<section class="frame-card p-5">
+<h2 class="t-title">当前画板</h2>
+<div class="flex items-center gap-2 mt-2">
+<span class="t-caption px-2 py-1 rounded-full" id="tabBadge" style="background: var(--accent-soft); color: var(--accent)">D-05 · 通用</span>
+</div>
+<p class="t-caption muted mt-3" id="tabDesc">演示开机自启、悬浮电平窗、菜单栏图标样式与语言四项；不修改真实设置。</p>
+<div class="hair-t mt-3 pt-3 space-y-[6px]">
+<div class="flex items-center justify-between t-caption"><span class="muted">窗口最小尺寸</span><span class="mono">680 × 480</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">左侧分区数</span><span class="mono">6</span></div>
+<div class="flex items-center justify-between t-caption"><span class="muted">横向滚动</span><span class="mono" style="color: var(--green)">无</span></div>
+</div>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">权限三态图例</h2>
+<div class="mt-3 space-y-2">
+<div class="flex items-center justify-between t-caption"><span>已授权</span><span class="badge" style="color: var(--green)"><iconify-icon icon="solar:check-circle-bold" style="font-size:13px"></iconify-icon>已授权 ✓</span></div>
+<div class="flex items-center justify-between t-caption"><span>未授权</span><span class="badge" style="color: var(--yellow)"><iconify-icon icon="solar:danger-triangle-bold" style="font-size:13px"></iconify-icon>未授权</span></div>
+<div class="flex items-center justify-between t-caption"><span>需重启</span><span class="badge" style="color: var(--accent)"><iconify-icon icon="solar:restart-bold" style="font-size:13px"></iconify-icon>重启后生效</span></div>
+<div class="flex items-center justify-between t-caption"><span>不需要 / 不可用</span><span class="badge muted"><iconify-icon icon="solar:minus-circle-bold" style="font-size:13px"></iconify-icon>不适用</span></div>
+</div>
+<p class="t-caption faint mt-3">此处仅展示动作与反馈，不打开系统设置、不重启 App，也不读取权限。</p>
+</section>
+<section class="frame-card p-5">
+<h2 class="t-title">深色模式</h2>
+<p class="t-caption muted mt-1">设置窗口必须跟随系统。使用右上角切换可核对两种外观下的分割线与文字对比度。</p>
+<div class="mt-3 rounded-[8px] p-2" style="background: var(--panel)">
+<div class="flex items-center gap-2">
+<span class="w-[10px] h-[10px] rounded-full" style="background:#ff5f57"></span>
+<span class="w-[10px] h-[10px] rounded-full" style="background:#febc2e"></span>
+<span class="w-[10px] h-[10px] rounded-full" style="background:#28c840"></span>
+<span class="t-caption muted ml-auto">VoiceRelay 设置</span>
+</div>
+</div>
+</section>
+</aside>
+</div>
+<footer class="hair-t mt-8 pt-5 flex items-center justify-between t-caption faint">
+<a class="hover:opacity-70" href="popover.html">← D-02 ~ D-04 弹窗</a>
+<a class="hover:opacity-70" href="onboarding.html" style="color: var(--accent)">D-08 首次向导 →</a>
+</footer>
+</div>
+<script>
+  const root = document.documentElement;
+  const segButtons = document.querySelectorAll('#appearanceSeg [data-appearance]');
+  const content = document.getElementById('settingsContent');
+  const tabBadge = document.getElementById('tabBadge');
+  const tabDesc = document.getElementById('tabDesc');
+
+  const tabMeta = {
+    general: { code: 'D-05', label: '通用', desc: '演示开机自启、悬浮电平窗、菜单栏图标样式与语言四项；不修改真实设置。' },
+    connection: { code: '连接', label: '连接', desc: '演示设备、配对列表、配对码轮换、蓝牙待认证状态与只读端口。' },
+    voice: { code: 'D-07', label: '语音', desc: '演示后端、模型与录音参数；仅检出虚拟声卡不代表后端 B 已可用。' },
+    keys: { code: '按键', label: '按键', desc: '演示所有 App 切换、焦点回退与发送后的回车行为。' },
+    permission: { code: 'D-06', label: '权限', desc: '三张预设权限卡；真实 App 每 2 秒刷新，本页不读取系统权限。' },
+    about: { code: '关于', label: '关于', desc: '版本、构建号、日志目录、导出诊断与开源许可。' }
+  };
+
+  function switchTab(tab) {
+    document.querySelectorAll('#settingsSidebar [data-tab]').forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-tab') === tab);
+    });
+    document.querySelectorAll('.tab-panel').forEach(function (panel) {
+      panel.classList.toggle('hide', panel.getAttribute('data-panel') !== tab);
+    });
+    const meta = tabMeta[tab];
+    if (meta) {
+      tabBadge.textContent = meta.code + ' · ' + meta.label;
+      tabDesc.textContent = meta.desc;
+    }
+    content.scrollTop = 0;
+  }
+
+  document.getElementById('settingsSidebar').addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-tab]');
+    if (!btn) return;
+    switchTab(btn.getAttribute('data-tab'));
+    try {
+      history.replaceState(null, '', '#' + btn.getAttribute('data-tab'));
+    } catch (e) {}
+  });
+
+  // 开关
+  document.addEventListener('click', function (event) {
+    const sw = event.target.closest('.switch[data-switch]');
+    if (!sw) return;
+    sw.classList.toggle('on');
+  });
+
+  // Toast
+  let toastTimer = null;
+  function showToast(text) {
+    let el = document.getElementById('appToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'appToast';
+      el.className = 'toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.style.display = 'block';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.style.display = 'none'; }, 2200);
+  }
+  document.addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-toast]');
+    if (!btn) return;
+    showToast('演示：' + btn.getAttribute('data-toast'));
+  });
+
+  // 配对码
+  document.getElementById('regenPair').addEventListener('click', function () {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    document.getElementById('pairFeedback').textContent = '演示配对码 ' + code + ' · 仅用于展示，无有效期；旧设备密钥仍有效。';
+    showToast('演示：已生成新配对码，旧设备密钥仍有效');
+  });
+
+  // 语音：模型 / 松手延迟 / 最长录音 循环切换
+  function cycleButton(id, textId, options, onPick) {
+    const btn = document.getElementById(id);
+    const textEl = document.getElementById(textId);
+    let index = 0;
+    btn.addEventListener('click', function () {
+      index = (index + 1) % options.length;
+      textEl.textContent = options[index];
+      if (onPick) onPick(options[index]);
+    });
+  }
+  cycleButton('modelSelect', 'modelText', ['SenseVoice Small', 'SenseVoice Small（int8）'], function (val) {
+    showToast('演示：模型选项已切换为 ' + val + '，不执行真实加载');
+  });
+  cycleButton('tailDelay', 'tailDelayText', ['180 ms', '220 ms', '300 ms']);
+  cycleButton('maxRecord', 'maxRecordText', ['60 秒', '90 秒', '120 秒']);
+  cycleButton('enterBehavior', 'enterBehaviorText', ['不回车', '自动回车']);
+
+  // 后端下拉（B 置灰）
+  const voiceBackend = document.getElementById('voiceBackend');
+  const voiceBackendMenu = document.getElementById('voiceBackendMenu');
+  voiceBackend.addEventListener('click', function (event) {
+    event.stopPropagation();
+    voiceBackendMenu.classList.toggle('hide');
+  });
+  voiceBackendMenu.addEventListener('click', function (event) {
+    const item = event.target.closest('[data-vbackend]');
+    if (!item) return;
+    document.getElementById('voiceBackendText').textContent = 'A · 本地识别';
+    voiceBackendMenu.classList.add('hide');
+    showToast('演示：已切换到后端 A · 本地识别');
+  });
+  document.addEventListener('click', function (event) {
+    if (!event.target.closest('#voiceBackend') && !event.target.closest('#voiceBackendMenu')) {
+      voiceBackendMenu.classList.add('hide');
+    }
+  });
+
+  // 灵敏度
+  const sensRange = document.getElementById('sensRange');
+  const sensValue = document.getElementById('sensValue');
+  sensRange.addEventListener('input', function () {
+    sensValue.textContent = sensRange.value;
+    sensRange.style.background = 'linear-gradient(90deg, var(--accent) 0%, var(--accent) ' + sensRange.value + '%, var(--separator) ' + sensRange.value + '%, var(--separator) 100%)';
+  });
+  sensRange.style.background = 'linear-gradient(90deg, var(--accent) 0%, var(--accent) 62%, var(--separator) 62%, var(--separator) 100%)';
+
+  // 权限三态
+  const permData = {
+    all: {
+      accessibility: { status: 'granted' },
+      inputMonitoring: { status: 'denied' },
+      bluetooth: { status: 'na' }
+    },
+    restart: {
+      accessibility: { status: 'granted' },
+      inputMonitoring: { status: 'restart' },
+      bluetooth: { status: 'off' }
+    },
+    alloff: {
+      accessibility: { status: 'denied' },
+      inputMonitoring: { status: 'denied' },
+      bluetooth: { status: 'denied' }
+    }
+  };
+
+  const statusMap = {
+    granted: { text: '已授权', icon: 'solar:check-circle-bold', color: 'var(--green)', card: false },
+    restart: { text: '已授权，重启后生效', icon: 'solar:restart-bold', color: 'var(--accent)', card: false },
+    denied: { text: '未授权', icon: 'solar:danger-triangle-bold', color: 'var(--yellow)', card: true },
+    off: { text: '已关闭', icon: 'solar:danger-triangle-bold', color: 'var(--yellow)', card: true },
+    na: { text: '不需要', icon: 'solar:minus-circle-bold', color: 'var(--label-2)', card: false }
+  };
+
+  function renderPermissions(mode) {
+    const config = permData[mode];
+    Object.keys(config).forEach(function (key) {
+      const card = document.querySelector('.perm-card[data-perm="' + key + '"]');
+      if (!card) return;
+      const meta = statusMap[config[key].status];
+      const badge = card.querySelector('[data-perm-status]');
+      badge.innerHTML = '<iconify-icon icon="' + meta.icon + '" style="font-size:13px"></iconify-icon>' + meta.text;
+      badge.style.color = meta.color;
+      card.classList.toggle('warn', meta.card);
+      const restartBtn = card.querySelector('[data-perm-restart]');
+      if (restartBtn) {
+        const isRestart = key === 'inputMonitoring' && config[key].status === 'restart';
+        restartBtn.textContent = isRestart ? '模拟重启' : '演示重新检测';
+        restartBtn.dataset.mode = isRestart ? 'restart' : 'recheck';
+        restartBtn.classList.toggle('hidden', !(isRestart || config[key].status === 'granted'));
+      }
+      const actionBtn = card.querySelector('[data-perm-action]');
+      actionBtn.textContent = config[key].status === 'granted' ? '模拟前往系统设置' : '模拟打开系统设置';
+    });
+    document.querySelectorAll('#permSeg [data-permmode]').forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-permmode') === mode);
+    });
+  }
+
+  document.getElementById('permSeg').addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-permmode]');
+    if (!btn) return;
+    renderPermissions(btn.getAttribute('data-permmode'));
+    document.getElementById('permInline').classList.add('hide');
+  });
+
+  content.addEventListener('click', function (event) {
+    const whyBtn = event.target.closest('[data-why-toggle]');
+    if (whyBtn) {
+      const block = whyBtn.closest('.perm-block');
+      const why = block.querySelector('[data-why]');
+      const open = why.classList.toggle('open');
+      const chev = whyBtn.querySelector('[data-why-chev]');
+      if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+      return;
+    }
+    const restartBtn = event.target.closest('[data-perm-restart]');
+    if (restartBtn) {
+      if (restartBtn.dataset.mode === 'recheck') {
+        showToast('演示：未读取系统权限；当前仍为预设状态');
+      } else {
+        showToast('演示：不执行重启，仅展示重启后生效状态');
+      }
+      return;
+    }
+    const actionBtn = event.target.closest('[data-perm-action]');
+    if (actionBtn) {
+      const card = actionBtn.closest('.perm-card');
+      const title = card.querySelector('[data-perm-title]').textContent;
+      const inline = document.getElementById('permInline');
+      inline.classList.remove('hide');
+      inline.textContent = '演示：未打开「系统设置 › 隐私与安全性 › ' + title + '」。真实 App 每 2 秒刷新权限；此处仅切换预设状态。';
+      return;
+    }
+    const recheck = event.target.closest('#recheckBtn');
+    if (recheck) {
+      showToast('演示：权限状态未读取系统，请使用上方三态预设切换');
+      return;
+    }
+    const done = event.target.closest('#permDone');
+    if (done) {
+      showToast('演示：权限页交互已完成，未保存系统权限');
+    }
+  });
+
+  // 窗口尺寸
+  const settingsWin = document.getElementById('settingsWin');
+  const sizeHint = document.getElementById('sizeHint');
+  const winNarrow = document.getElementById('winNarrow');
+  const winBase = document.getElementById('winBase');
+
+  function setWindowSize(width, height) {
+    settingsWin.style.width = width + 'px';
+    settingsWin.style.height = height + 'px';
+    settingsWin.classList.toggle('compact', width <= 680);
+    sizeHint.textContent = '当前：' + width + ' × ' + height + (width <= 680 ? ' · 侧栏自动收起为图标，内容区无横向滚动' : '');
+    winNarrow.classList.toggle('on', width === 680);
+    winBase.classList.toggle('on', width === 720);
+  }
+  winNarrow.addEventListener('click', function () { setWindowSize(680, 480); });
+  winBase.addEventListener('click', function () { setWindowSize(720, 520); });
+
+  // 外观
+  function applyAppearance(mode) {
+    if (mode === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    segButtons.forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-appearance') === mode);
+    });
+    try { localStorage.setItem('vr-appearance', mode); } catch (e) {}
+  }
+  segButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyAppearance(btn.getAttribute('data-appearance'));
+    });
+  });
+
+  let saved = 'system';
+  try { saved = localStorage.getItem('vr-appearance') || 'system'; } catch (e) {}
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyAppearance(saved === 'light' || saved === 'dark' ? saved : (prefersDark ? 'dark' : 'light'));
+
+  // 初始 Tab
+  renderPermissions('all');
+  let initialTab = 'general';
+  const hash = (location.hash || '').replace('#', '');
+  if (['general', 'connection', 'voice', 'keys', 'permission', 'about'].indexOf(hash) >= 0) {
+    initialTab = hash;
+  }
+  switchTab(initialTab);
+</script>
+</body>
+</html>

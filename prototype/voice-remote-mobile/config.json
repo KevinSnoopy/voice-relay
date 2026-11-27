@@ -1,0 +1,32 @@
+{
+  "routes": [
+    { "path": "/", "src": "src/pages/Index.tsx" },
+    { "path": "/m01", "src": "src/pages/Welcome.tsx" },
+    { "path": "/m02", "src": "src/pages/Permissions.tsx" },
+    { "path": "/m03", "src": "src/pages/Discover.tsx" },
+    { "path": "/m04", "src": "src/pages/ScanPair.tsx" },
+    { "path": "/m05", "src": "src/pages/Connected.tsx" },
+    { "path": "/m06", "src": "src/pages/Listening.tsx" },
+    { "path": "/m07", "src": "src/pages/Recognizing.tsx" },
+    { "path": "/m08", "src": "src/pages/Delivered.tsx" },
+    { "path": "/m09", "src": "src/pages/Failed.tsx" },
+    { "path": "/m10", "src": "src/pages/ControlPanelPage.tsx" },
+    { "path": "/m11", "src": "src/pages/Settings.tsx" },
+    { "path": "/m12", "src": "src/pages/Reconnect.tsx" },
+    { "path": "/m13", "src": "src/pages/Disconnected.tsx" },
+    { "path": "/components", "src": "src/pages/Components.tsx" }
+  ],
+  "components": [
+    { "name": "PhoneScreen", "src": "src/components/PhoneScreen.tsx" },
+    { "name": "StatusBar", "src": "src/components/StatusBar.tsx" },
+    { "name": "Waveform", "src": "src/components/Waveform.tsx" },
+    { "name": "HoldButton", "src": "src/components/HoldButton.tsx" },
+    { "name": "ControlPanel", "src": "src/components/ControlPanel.tsx" },
+    { "name": "VoiceHomeScreen", "src": "src/components/VoiceHomeScreen.tsx" },
+    { "name": "Button", "src": "src/components/ui/button.tsx" },
+    { "name": "Card", "src": "src/components/ui/card.tsx" },
+    { "name": "Badge", "src": "src/components/ui/badge.tsx" },
+    { "name": "Input", "src": "src/components/ui/input.tsx" },
+    { "name": "Switch", "src": "src/components/ui/switch.tsx" }
+  ]
+}

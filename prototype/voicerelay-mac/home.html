@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoiceRelay · Mac 端画板索引</title>
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+  :root {
+    --label: #1d1d1f;
+    --label-2: rgba(60, 60, 67, 0.6);
+    --label-3: rgba(60, 60, 67, 0.36);
+    --separator: rgba(60, 60, 67, 0.16);
+    --canvas: #ececea;
+    --window: #ffffff;
+    --panel: #f5f5f4;
+    --accent: #0a6cff;
+    --accent-soft: rgba(10, 108, 255, 0.12);
+    --yellow: #b45309;
+    --yellow-bg: rgba(255, 204, 0, 0.16);
+    --green: #1c8f4a;
+    --red: #d32f2f;
+    --menubar: rgba(246, 246, 246, 0.92);
+    --card-ring: rgba(0, 0, 0, 0.07);
+  }
+  html.dark {
+    --label: #f2f2f7;
+    --label-2: rgba(235, 235, 245, 0.62);
+    --label-3: rgba(235, 235, 245, 0.34);
+    --separator: rgba(235, 235, 245, 0.16);
+    --canvas: #131315;
+    --window: #1e1e20;
+    --panel: #262629;
+    --accent: #3d9bff;
+    --accent-soft: rgba(61, 155, 255, 0.18);
+    --yellow: #f0b429;
+    --yellow-bg: rgba(240, 180, 41, 0.14);
+    --green: #43c476;
+    --red: #ff6b60;
+    --menubar: rgba(32, 32, 35, 0.92);
+    --card-ring: rgba(255, 255, 255, 0.09);
+  }
+  body {
+    background: var(--canvas);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .t-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .t-body { font-size: 13px; line-height: 1.5; }
+  .t-caption { font-size: 11px; line-height: 1.4; }
+  .muted { color: var(--label-2); }
+  .faint { color: var(--label-3); }
+  .win { background: var(--window); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.16), 0 0 0 0.5px var(--card-ring); }
+  .panel { background: var(--panel); }
+  .hair { background: var(--separator); }
+  .hair-t { border-top: 0.5px solid var(--separator); }
+  .hair-b { border-bottom: 0.5px solid var(--separator); }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .btn-secondary { background: var(--window); color: var(--label); border: 0.5px solid var(--separator); border-radius: 8px; font-size: 13px; }
+  .seg { background: var(--panel); border-radius: 8px; padding: 2px; display: inline-flex; }
+  .seg-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; color: var(--label-2); }
+  .seg-item.on { background: var(--window); color: var(--label); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+  .frame-card { background: var(--window); border-radius: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px var(--card-ring); }
+  .badge { font-size: 11px; line-height: 1; display: inline-flex; align-items: center; gap: 4px; }
+  .link-card:hover { box-shadow: 0 10px 26px rgba(0,0,0,0.1), 0 0 0 0.5px var(--accent); transform: translateY(-2px); }
+  .link-card { transition: box-shadow .2s ease, transform .2s ease; }
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-[1240px] mx-auto px-8 py-10">
+<!-- 顶部品牌与外观切换 -->
+<header class="flex items-start justify-between gap-6 mb-10">
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-[12px] flex items-center justify-center" style="background: var(--accent)">
+<iconify-icon icon="solar:microphone-3-bold" style="font-size:24px;color:#fff"></iconify-icon>
+</div>
+<div>
+<h1 class="text-[22px] font-semibold tracking-tight">VoiceRelay · Mac 端 UI 原型</h1>
+<p class="t-body muted mt-1">菜单栏常驻，不做主窗口。10 个画板 + 1 个组件页，覆盖连接、授权、异常三条主线。</p>
+</div>
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<span class="badge px-2 py-1 rounded-full shrink-0" style="background: var(--yellow-bg); color: var(--yellow); box-shadow: inset 0 0 0 0.5px var(--yellow)">
+<iconify-icon icon="solar:info-circle-bold" style="font-size:12px"></iconify-icon>演示数据 · 非实时状态
+</span>
+<div class="seg" id="appearanceSeg">
+<button class="seg-item on" data-appearance="light" type="button">浅色</button>
+<button class="seg-item" data-appearance="dark" type="button">深色</button>
+</div>
+<div class="t-caption faint">v1.0.0 · 设计稿</div>
+</div>
+</header>
+<!-- 快速开始 -->
+<section class="frame-card p-5 mb-6 flex items-center justify-between gap-6">
+<div>
+<p class="t-body font-medium">从这里开始：先看弹窗三态，再走一遍权限授权</p>
+<p class="t-caption muted mt-1">所有页面均为交互式演示；权限、连接、最近文本与电平不读取真实系统。可切换外观和关键状态，核对组件与文案。</p>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<a class="btn-primary px-3 py-[6px] inline-flex items-center gap-1" href="popover.html">
+          打开弹窗三态
+          <iconify-icon icon="solar:arrow-right-linear" style="font-size:13px"></iconify-icon>
+</a>
+<a class="btn-secondary px-3 py-[6px]" href="settings.html#permission">权限页（D-06）</a>
+</div>
+</section>
+<!-- 概览指标 -->
+<section class="grid grid-cols-3 gap-4 mb-10">
+<div class="frame-card p-5">
+<div class="flex items-center gap-2 muted t-caption">
+<iconify-icon icon="solar:menubar-bold" style="font-size:14px"></iconify-icon>
+          三种能力，一个入口
+        </div>
+<p class="t-body mt-2">知道连没连上 · 把权限授了 · 出问题能修好。其余一律不做。</p>
+</div>
+<div class="frame-card p-5">
+<div class="flex items-center gap-2 muted t-caption">
+<iconify-icon icon="solar:ruler-cross-pen-bold" style="font-size:14px"></iconify-icon>
+          基准尺寸
+        </div>
+<p class="t-body mt-2">弹窗 <span class="font-semibold">320 × 420</span> · 设置 <span class="font-semibold">720 × 520</span>（最小 680 × 480）</p>
+</div>
+<div class="frame-card p-5">
+<div class="flex items-center gap-2 muted t-caption">
+<iconify-icon icon="solar:pallete-2-bold" style="font-size:14px"></iconify-icon>
+          视觉规范
+        </div>
+<p class="t-body mt-2">系统语义色 · 圆角 12/10/8 · 字号 15/13/11 · SF Symbols</p>
+</div>
+</section>
+<!-- 画板网格 -->
+<div class="flex items-baseline justify-between mb-4">
+<h2 class="t-title">画板清单</h2>
+<span class="t-caption faint">点击任一分组进入对应页面查看全部状态</span>
+</div>
+<div class="grid grid-cols-3 gap-5 mb-10">
+<!-- D-01 -->
+<a class="link-card frame-card p-6 block" href="menubar.html">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">D-01</div>
+<h3 class="t-title mt-1">菜单栏图标四态</h3>
+</div>
+<span class="badge muted"><iconify-icon icon="solar:arrow-right-up-linear" style="font-size:14px"></iconify-icon></span>
+</div>
+<div class="mt-6 rounded-[10px] overflow-hidden" style="background: var(--menubar)">
+<div class="h-[34px] flex items-center justify-end gap-3 px-3">
+<span class="text-[12px]" style="color: var(--label)">􀊫</span>
+<span class="w-[14px] h-[14px] rounded-full border-[1.4px]" style="border-color: var(--label)"></span>
+<span class="text-[12px]" style="color: var(--label)">􀏇</span>
+<span class="text-[12px] muted">周五 14:32</span>
+</div>
+</div>
+<p class="t-caption muted mt-4">18 × 18 pt · Template Image · 状态切换 200 ms</p>
+</a>
+<!-- D-02 / D-03 / D-04 -->
+<a class="link-card frame-card p-6 block" href="popover.html">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">D-02 · D-03 · D-04</div>
+<h3 class="t-title mt-1">弹窗三态</h3>
+</div>
+<span class="badge muted"><iconify-icon icon="solar:arrow-right-up-linear" style="font-size:14px"></iconify-icon></span>
+</div>
+<div class="mt-5 flex items-start justify-center gap-3">
+<div class="w-[96px] h-[126px] rounded-[8px] overflow-hidden" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="h-[16px] flex items-center gap-1 px-2 hair-b">
+<span class="w-[5px] h-[5px] rounded-full" style="background: var(--green)"></span>
+<span class="w-[26px] h-[3px] rounded" style="background: var(--separator)"></span>
+</div>
+<div class="h-[20px] mx-2 mt-2 rounded-[3px]" style="background: var(--panel)"></div>
+<div class="px-2 mt-2 space-y-[4px]">
+<span class="block h-[3px] rounded" style="background: var(--separator)"></span>
+<span class="block w-3/4 h-[3px] rounded" style="background: var(--separator)"></span>
+</div>
+</div>
+<div class="w-[96px] h-[126px] rounded-[8px] overflow-hidden" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="h-[16px] flex items-center gap-1 px-2 hair-b">
+<span class="w-[5px] h-[5px] rounded-full" style="background: var(--red)"></span>
+<span class="w-[26px] h-[3px] rounded" style="background: var(--separator)"></span>
+</div>
+<div class="h-[20px] mx-2 mt-2 rounded-[3px] flex items-end gap-[2px] px-[6px] pb-[3px]" style="background: var(--panel)">
+<i class="w-[2px] rounded-sm" style="height:60%;background:var(--red)"></i>
+<i class="w-[2px] rounded-sm" style="height:90%;background:var(--red)"></i>
+<i class="w-[2px] rounded-sm" style="height:40%;background:var(--red)"></i>
+<i class="w-[2px] rounded-sm" style="height:75%;background:var(--red)"></i>
+</div>
+<div class="px-2 mt-2 space-y-[4px]">
+<span class="block h-[3px] rounded" style="background: var(--separator)"></span>
+<span class="block w-3/4 h-[3px] rounded" style="background: var(--separator)"></span>
+</div>
+</div>
+<div class="w-[96px] h-[126px] rounded-[8px] overflow-hidden" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="h-[16px] flex items-center gap-1 px-2 hair-b">
+<span class="w-[5px] h-[5px] rounded-full" style="background: var(--label-3)"></span>
+<span class="w-[26px] h-[3px] rounded" style="background: var(--separator)"></span>
+</div>
+<div class="h-[20px] mx-2 mt-2 rounded-[3px] flex items-center justify-center" style="background: var(--panel)">
+<span class="w-[10px] h-[10px] rounded-[2px] border" style="border-color: var(--label-3)"></span>
+</div>
+<div class="px-2 mt-2 space-y-[4px]">
+<span class="block h-[3px] rounded" style="background: var(--separator)"></span>
+<span class="block w-3/4 h-[3px] rounded" style="background: var(--separator)"></span>
+</div>
+</div>
+</div>
+<p class="t-caption muted mt-4">320 × 420 · 圆角 12 · 无标题栏</p>
+</a>
+<!-- D-05 -->
+<a class="link-card frame-card p-6 block" href="settings.html#general">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">D-05</div>
+<h3 class="t-title mt-1">设置 · 通用</h3>
+</div>
+<span class="badge muted"><iconify-icon icon="solar:arrow-right-up-linear" style="font-size:14px"></iconify-icon></span>
+</div>
+<div class="mt-5 h-[132px] rounded-[10px] flex overflow-hidden" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="w-[74px] panel p-2 space-y-[6px]">
+<span class="block h-[3px] w-[40px] rounded" style="background: var(--accent)"></span>
+<span class="block h-[2px] w-[32px] rounded" style="background: var(--separator)"></span>
+<span class="block h-[2px] w-[38px] rounded" style="background: var(--separator)"></span>
+<span class="block h-[2px] w-[28px] rounded" style="background: var(--separator)"></span>
+</div>
+<div class="flex-1 p-3 space-y-[8px]">
+<span class="block h-[3px] w-[46px] rounded" style="background: var(--label-3)"></span>
+<div class="flex items-center justify-between">
+<span class="h-[2px] w-[46px] rounded block" style="background: var(--separator)"></span>
+<span class="w-[18px] h-[10px] rounded-full block" style="background: var(--accent)"></span>
+</div>
+<div class="flex items-center justify-between">
+<span class="h-[2px] w-[38px] rounded block" style="background: var(--separator)"></span>
+<span class="w-[18px] h-[10px] rounded-full block" style="background: var(--accent)"></span>
+</div>
+</div>
+</div>
+<p class="t-caption muted mt-4">720 × 520 · 左 6 分区 · 最小 680 × 480</p>
+</a>
+<!-- D-06 -->
+<a class="link-card frame-card p-6 block" href="settings.html#permission" style="box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 0 0 1.5px var(--accent)">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption" style="color: var(--accent)">D-06 · 最重要</div>
+<h3 class="t-title mt-1">设置 · 权限（三态）</h3>
+</div>
+<span class="t-caption px-2 py-1 rounded-full" style="background: var(--accent-soft); color: var(--accent)">验收重点</span>
+</div>
+<div class="mt-5 space-y-2">
+<div class="h-[44px] rounded-[8px] px-3 flex items-center justify-between" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<span class="t-caption">辅助功能</span>
+<span class="badge flex items-center gap-1" style="color: var(--green)"><iconify-icon icon="solar:check-circle-bold" style="font-size:13px"></iconify-icon>已授权</span>
+</div>
+<div class="h-[44px] rounded-[8px] px-3 flex items-center justify-between" style="background: var(--yellow-bg); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<span class="t-caption">输入监控</span>
+<span class="badge flex items-center gap-1" style="color: var(--yellow)"><iconify-icon icon="solar:danger-triangle-bold" style="font-size:13px"></iconify-icon>未授权</span>
+</div>
+<div class="h-[44px] rounded-[8px] px-3 flex items-center justify-between" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<span class="t-caption">蓝牙</span>
+<span class="badge flex items-center gap-1" style="color: var(--label-2)"><iconify-icon icon="solar:minus-circle-bold" style="font-size:13px"></iconify-icon>不需要</span>
+</div>
+</div>
+<p class="t-caption muted mt-4">卡片高 96 · 状态 = 图标 + 文字 · 未授权浅黄底</p>
+</a>
+<!-- D-07 -->
+<a class="link-card frame-card p-6 block" href="settings.html#voice">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">D-07</div>
+<h3 class="t-title mt-1">设置 · 语音</h3>
+</div>
+<span class="badge muted"><iconify-icon icon="solar:arrow-right-up-linear" style="font-size:14px"></iconify-icon></span>
+</div>
+<div class="mt-5 h-[132px] rounded-[10px] p-3 space-y-[10px]" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="flex items-center justify-between">
+<span class="h-[2px] w-[34px] rounded" style="background: var(--separator)"></span>
+<span class="t-caption muted flex items-center gap-1">本地识别 <iconify-icon icon="solar:alt-arrow-down-linear" style="font-size:10px"></iconify-icon></span>
+</div>
+<div class="flex items-center justify-between">
+<span class="h-[2px] w-[42px] rounded" style="background: var(--separator)"></span>
+<span class="h-[6px] w-[56px] rounded-full" style="background: var(--accent-soft)">
+<span class="block h-[6px] w-[36px] rounded-full" style="background: var(--accent)"></span>
+</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="h-[2px] w-[30px] rounded" style="background: var(--separator)"></span>
+<span class="t-caption muted">180 ms</span>
+</div>
+</div>
+<p class="t-caption muted mt-4">后端 · 模型 · 灵敏度 · 松手延迟 · 最长录音</p>
+</a>
+<!-- D-08 -->
+<a class="link-card frame-card p-6 block" href="onboarding.html">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">D-08</div>
+<h3 class="t-title mt-1">首次启动向导</h3>
+</div>
+<span class="t-caption px-2 py-1 rounded-full" style="background: var(--accent-soft); color: var(--accent)">三步</span>
+</div>
+<div class="mt-5 h-[132px] rounded-[10px] p-3 flex flex-col justify-between" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<div class="flex items-center gap-2">
+<span class="w-[14px] h-[14px] rounded-full flex items-center justify-center text-[9px] font-semibold" style="background: var(--accent); color:#fff">1</span>
+<span class="h-[2px] flex-1 rounded" style="background: var(--separator)"></span>
+<span class="w-[14px] h-[14px] rounded-full flex items-center justify-center text-[9px]" style="background: var(--panel); color: var(--label-3)">2</span>
+<span class="h-[2px] flex-1 rounded" style="background: var(--separator)"></span>
+<span class="w-[14px] h-[14px] rounded-full flex items-center justify-center text-[9px]" style="background: var(--panel); color: var(--label-3)">3</span>
+</div>
+<div class="flex items-center justify-center gap-3">
+<div class="w-[42px] h-[42px] rounded-[4px]" style="background: repeating-linear-gradient(90deg, var(--label) 0 2px, transparent 2px 5px), repeating-linear-gradient(0deg, var(--label) 0 2px, transparent 2px 5px); opacity:.8"></div>
+<div class="space-y-1">
+<span class="block h-[2px] w-[52px] rounded" style="background: var(--separator)"></span>
+<span class="block h-[2px] w-[38px] rounded" style="background: var(--separator)"></span>
+</div>
+</div>
+<div class="flex justify-end">
+<span class="t-caption px-3 py-1 rounded-[6px]" style="background: var(--accent); color:#fff">下一步</span>
+</div>
+</div>
+<p class="t-caption muted mt-4">560 × 400 · 可退出 · 第 3 步需确认上屏成功</p>
+</a>
+<!-- D-09 -->
+<a class="link-card frame-card p-6 block" href="overlay.html">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">D-09</div>
+<h3 class="t-title mt-1">悬浮电平窗</h3>
+</div>
+<span class="badge muted"><iconify-icon icon="solar:arrow-right-up-linear" style="font-size:14px"></iconify-icon></span>
+</div>
+<div class="mt-5 h-[132px] rounded-[10px] flex items-center justify-center" style="background: var(--panel)">
+<div class="w-[140px] h-[44px] rounded-[10px] flex items-center px-3 gap-[3px]" style="background: var(--window); box-shadow: 0 6px 16px rgba(0,0,0,0.18), 0 0 0 0.5px var(--card-ring)">
+<span class="w-[6px] h-[6px] rounded-full mr-1" style="background: var(--red)"></span>
+<i class="flex-1 rounded-full" style="height:8px;background:var(--red)"></i>
+<i class="flex-1 rounded-full" style="height:20px;background:var(--red)"></i>
+<i class="flex-1 rounded-full" style="height:14px;background:var(--red)"></i>
+<i class="flex-1 rounded-full" style="height:24px;background:var(--red)"></i>
+<i class="flex-1 rounded-full" style="height:10px;background:var(--red)"></i>
+</div>
+</div>
+<p class="t-caption muted mt-4">140 × 44 · 淡入 150 ms · 淡出 800 ms · 不抢焦点</p>
+</a>
+<!-- D-10 -->
+<a class="link-card frame-card p-6 block" href="states.html">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">D-10</div>
+<h3 class="t-title mt-1">异常态与降级</h3>
+</div>
+<span class="badge" style="color: var(--yellow)"><iconify-icon icon="solar:danger-triangle-bold" style="font-size:14px"></iconify-icon></span>
+</div>
+<div class="mt-5 space-y-2">
+<div class="h-[30px] rounded-[6px] px-3 flex items-center gap-2" style="background: var(--yellow-bg)">
+<iconify-icon icon="solar:danger-triangle-bold" style="font-size:12px;color:var(--yellow)"></iconify-icon>
+<span class="t-caption" style="color: var(--yellow)">需要授权才能使用</span>
+</div>
+<div class="h-[30px] rounded-[6px] px-3 flex items-center gap-2" style="background: var(--panel)">
+<iconify-icon icon="solar:bell-bing-bold" style="font-size:12px;color: var(--label-2)"></iconify-icon>
+<span class="t-caption muted">未送达</span>
+</div>
+<div class="h-[30px] rounded-[6px] px-3 flex items-center gap-2" style="background: var(--panel)">
+<iconify-icon icon="solar:mobile-rotate-2-bold" style="font-size:12px;color: var(--label-2)"></iconify-icon>
+<span class="t-caption muted">等待手机连接</span>
+</div>
+</div>
+<p class="t-caption muted mt-4">5 个失败场景 · 每个都有可执行动作</p>
+</a>
+<!-- 组件页 -->
+<a class="link-card frame-card p-6 block" href="components.html">
+<div class="flex items-start justify-between">
+<div>
+<div class="t-caption faint">COMPONENTS</div>
+<h3 class="t-title mt-1">组件页</h3>
+</div>
+<span class="badge muted"><iconify-icon icon="solar:widget-5-bold" style="font-size:14px"></iconify-icon></span>
+</div>
+<div class="mt-5 grid grid-cols-2 gap-2">
+<div class="h-[38px] rounded-[6px] px-2 flex items-center justify-between" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<span class="t-caption muted">状态行</span>
+<span class="w-[6px] h-[6px] rounded-full" style="background: var(--green)"></span>
+</div>
+<div class="h-[38px] rounded-[6px] px-2 flex items-center gap-[2px]" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<i class="flex-1 rounded-full" style="height:6px;background:var(--label-3)"></i>
+<i class="flex-1 rounded-full" style="height:12px;background:var(--label-3)"></i>
+<i class="flex-1 rounded-full" style="height:8px;background:var(--label-3)"></i>
+<i class="flex-1 rounded-full" style="height:16px;background:var(--label-3)"></i>
+</div>
+<div class="col-span-2 h-[38px] rounded-[6px] px-2 flex items-center justify-between" style="background: var(--window); box-shadow: 0 0 0 0.5px var(--card-ring)">
+<span class="t-caption muted">今天下午三点开会</span>
+<iconify-icon icon="solar:copy-bold" style="font-size:12px;color:var(--label-3)"></iconify-icon>
+</div>
+</div>
+<p class="t-caption muted mt-4">权限卡 3 态 · 状态行 4 态 · 电平条 · 后端下拉</p>
+</a>
+<!-- 验收清单 -->
+<div class="frame-card p-6">
+<div class="t-caption faint">CHECKLIST</div>
+<h3 class="t-title mt-1">UI 验收清单</h3>
+<ul class="mt-4 space-y-[10px]">
+<li class="flex items-start gap-2 t-caption"><iconify-icon icon="solar:check-circle-bold" style="font-size:14px;color:var(--green);margin-top:1px"></iconify-icon><span>菜单栏图标在浅色 / 深色下都清晰可辨</span></li>
+<li class="flex items-start gap-2 t-caption"><iconify-icon icon="solar:check-circle-bold" style="font-size:14px;color:var(--green);margin-top:1px"></iconify-icon><span>权限页一眼看出「缺哪个、点了会怎样」</span></li>
+<li class="flex items-start gap-2 t-caption"><iconify-icon icon="solar:check-circle-bold" style="font-size:14px;color:var(--green);margin-top:1px"></iconify-icon><span>弹窗打开不抢焦点，不影响正在输入的 App</span></li>
+<li class="flex items-start gap-2 t-caption"><iconify-icon icon="solar:check-circle-bold" style="font-size:14px;color:var(--green);margin-top:1px"></iconify-icon><span>收音中 → 空闲图标切换 &lt; 300 ms</span></li>
+<li class="flex items-start gap-2 t-caption"><iconify-icon icon="solar:check-circle-bold" style="font-size:14px;color:var(--green);margin-top:1px"></iconify-icon><span>设置窗口在 680 × 480 下无横向滚动</span></li>
+<li class="flex items-start gap-2 t-caption"><iconify-icon icon="solar:check-circle-bold" style="font-size:14px;color:var(--green);margin-top:1px"></iconify-icon><span>所有失败场景都有可执行动作</span></li>
+</ul>
+</div>
+</div>
+<footer class="hair-t pt-6 flex items-center justify-between t-caption faint">
+<span>VoiceRelay for macOS · 菜单栏常驻（LSUIElement = true），无 Dock 图标</span>
+<span>设计稿基于附件 04-ui-mac.md · 2026-11-26</span>
+</footer>
+</div>
+<script>
+  const root = document.documentElement;
+  const segButtons = document.querySelectorAll('#appearanceSeg [data-appearance]');
+
+  function applyAppearance(mode) {
+    if (mode === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    segButtons.forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-appearance') === mode);
+    });
+    try { localStorage.setItem('vr-appearance', mode); } catch (e) {}
+  }
+
+  segButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyAppearance(btn.getAttribute('data-appearance'));
+    });
+  });
+
+  let saved = 'system';
+  try { saved = localStorage.getItem('vr-appearance') || 'system'; } catch (e) {}
+  if (saved === 'light' || saved === 'dark') {
+    applyAppearance(saved);
+  } else {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyAppearance(prefersDark ? 'dark' : 'light');
+  }
+</script>
+</body>
+</html>

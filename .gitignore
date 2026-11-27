@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode / SwiftPM
+mac/.build/
+mac/build/
+mac/vendor/sherpa-onnx-*/
+mac/vendor/shared.done
+mac/vendor/*.tar.bz2
+mac/vendor/*.tar.gz
+
+# Flutter / Dart
+mobile/voicerelay/.dart_tool/
+mobile/voicerelay/build/
+mobile/voicerelay/.flutter-plugins
+mobile/voicerelay/.flutter-plugins-dependencies
+mobile/voicerelay/.idea/
+mobile/voicerelay/*.iml
+mobile/voicerelay/android/.gradle/
+mobile/voicerelay/android/.kotlin/
+mobile/voicerelay/android/**/build/
+mobile/voicerelay/android/local.properties
+mobile/voicerelay/ios/Pods/
+mobile/voicerelay/ios/.symlinks/
+mobile/voicerelay/ios/Flutter/Generated.xcconfig
+mobile/voicerelay/ios/Flutter/flutter_export_environment.sh
+mobile/voicerelay/ios/Flutter/ephemeral/
+mobile/voicerelay/ios/Runner/GeneratedPluginRegistrant.*
+mobile/voicerelay/ios/**/xcuserdata/
+mobile/voicerelay/ios/**/DerivedData/
+
+# Prototype
+prototype/voice-remote-mobile/node_modules/
+prototype/voice-remote-mobile/.vite/
+
+# Icon build output
+tools/icons/out/
+
+# Release artifacts
+dist/
+*.dmg
+*.apk
