@@ -57,7 +57,7 @@ flutter test
 
 ## 特别需要帮忙的方向
 
-1. **Apple Silicon 原生构建**：补 sherpa-onnx arm64 与 macOS arm64 的 WebRTC，产出 universal DMG。
+1. **universal DMG**：目前 `arm64` 与 `x86_64` 分开出包，可以研究合成 universal 包（WebRTC 需要一份同时含两种架构的构建）。
 2. **iOS 真机**：权限、后台、WebRTC 播放。
 3. **BLE 验收**：不同 Android 厂商的后台与 GATT MTU 差异。
 4. **屏幕观看**：真机视频首帧、延迟、横屏体验。

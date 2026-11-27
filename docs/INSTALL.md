@@ -4,7 +4,15 @@
 
 ### 1. 安装
 
-1. 从 [Releases](https://github.com/KevinSnoopy/voice-relay/releases/latest) 下载 `VoiceRelay-1.0.0.dmg`。
+1. 按芯片下载对应安装包（[Releases](https://github.com/KevinSnoopy/voice-relay/releases/latest)）：
+
+   | 机器 | 文件 |
+   |---|---|
+   | Apple Silicon（M1/M2/M3/M4…） | `VoiceRelay-1.0.0-macos-arm64.dmg` |
+   | Intel | `VoiceRelay-1.0.0.dmg` |
+
+   不确定的话：左上角  → 关于本机，看「芯片」是 Apple 还是 Intel。
+
 2. 双击打开，把 **VoiceRelay.app** 拖进 **Applications**。
 3. 首次打开：在 Finder 里**右键 → 打开 → 打开**。
    如果仍被拦截，到 **系统设置 › 隐私与安全性**，在底部点 **仍要打开**。
@@ -12,7 +20,7 @@
 > DMG 是 ad-hoc 签名、未公证的社区构建，所以系统会要求手动确认一次。校验完整性：
 >
 > ```bash
-> shasum -a 256 VoiceRelay-1.0.0.dmg
+> shasum -a 256 VoiceRelay-1.0.0-macos-arm64.dmg   # 或 VoiceRelay-1.0.0.dmg
 > ```
 
 ### 2. 授权
@@ -58,7 +66,8 @@ VoiceRelay 是菜单栏 App，启动后没有 Dock 图标，请到屏幕右上�
 | 菜单栏没有图标 | 确认 App 在运行；`open /Applications/VoiceRelay.app`；LSUIElement 应用不显示 Dock 图标 |
 | 手机找不到 Mac | 同一 Wi-Fi？关闭 AP 隔离/访客网络；macOS 防火墙放行 VoiceRelay；手动填 IP 试 |
 | 能连上但没反应 | 检查辅助功能权限；看 App 设置里的「最近错误」；重启 App |
-| 识别很慢 | Apple Silicon 上经 Rosetta 运行会慢；Intel 上确认没有其他大任务占 CPU |
+| 识别很慢 | Apple Silicon 请用 `arm64` 包，Rosetta 下会慢；Intel 上确认没有其他大任务占 CPU |
+| 提示「无法打开，因为它不支持此架构」 | 装错包了：Apple Silicon 用 `arm64`，Intel 用不带后缀的那个 |
 | 提示模型缺失 | 设置 › 模型 › 下载语音模型；或 `mac/scripts/download-models.sh` |
 | 屏幕共享黑屏 | 授予「屏幕录制」权限后**重启 App**；仅支持 macOS 13+ |
 

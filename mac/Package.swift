@@ -3,8 +3,21 @@ import PackageDescription
 import Foundation
 
 let packageRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
-let sherpaRoot = "\(packageRoot)/vendor/sherpa-onnx-v2.0.3-osx-x64-shared"
-let opusRoot = "\(packageRoot)/vendor/opus"
+
+// Select the vendored binaries matching the build architecture.
+#if arch(arm64)
+let hostArch = "arm64"
+// No official WebRTC build is published for macOS arm64; use the LiveKit
+// maintained XCFramework (same RTC* Objective-C API) instead.
+let webrtcTarget: Target = .binaryTarget(name: "LiveKitWebRTC", path: "vendor/LiveKitWebRTC.xcframework")
+let webrtcDependency: [Target.Dependency] = ["LiveKitWebRTC"]
+#else
+let hostArch = "x64"
+let webrtcTarget: Target = .binaryTarget(name: "WebRTC", path: "vendor/WebRTC.xcframework")
+let webrtcDependency: [Target.Dependency] = ["WebRTC"]
+#endif
+let sherpaRoot = "\(packageRoot)/vendor/sherpa-onnx-v2.0.3-osx-\(hostArch)-shared"
+let opusRoot = hostArch == "arm64" ? "\(packageRoot)/vendor/opus-arm64" : "\(packageRoot)/vendor/opus"
 
 let package = Package(
     name: "VoiceRelay",
@@ -35,8 +48,8 @@ let package = Package(
         ),
         .executableTarget(name: "voicerelayd", dependencies: ["VoiceRelayCore"], path: "Sources/voicerelayd"),
         .executableTarget(name: "vrphone", dependencies: ["VoiceRelayCore"], path: "Sources/vrphone"),
-        .executableTarget(name: "VoiceRelayApp", dependencies: ["VoiceRelayCore", "WebRTC"], path: "Sources/VoiceRelayApp"),
-        .binaryTarget(name: "WebRTC", path: "vendor/WebRTC.xcframework"),
+        .executableTarget(name: "VoiceRelayApp", dependencies: [.target(name: "VoiceRelayCore")] + webrtcDependency, path: "Sources/VoiceRelayApp"),
+        webrtcTarget,
         .testTarget(name: "VoiceRelayCoreTests", dependencies: ["VoiceRelayCore"], path: "Tests/VoiceRelayCoreTests"),
     ]
 )

@@ -3,7 +3,11 @@ import CoreMedia
 import CoreVideo
 import Foundation
 import ScreenCaptureKit
+#if canImport(WebRTC)
 import WebRTC
+#elseif canImport(LiveKitWebRTC)
+import LiveKitWebRTC
+#endif
 import VoiceRelayCore
 
 /// Per-phone screen sharing session: one WebRTC video track + one SCStream.
@@ -71,13 +75,18 @@ final class ScreenSession: NSObject, RTCPeerConnectionDelegate, SCStreamDelegate
 
         let constraints = RTCMediaConstraints(
             mandatoryConstraints: [
-                kRTCMediaConstraintsOfferToReceiveAudio: kRTCMediaConstraintsValueFalse,
-                kRTCMediaConstraintsOfferToReceiveVideo: kRTCMediaConstraintsValueFalse,
+                // Same strings as kRTCMediaConstraintsOfferToReceiveAudio /
+                // kRTCMediaConstraintsValueFalse in the WebRTC headers.
+                "OfferToReceiveAudio": "false",
+                "OfferToReceiveVideo": "false",
             ],
             optionalConstraints: ["DtlsSrtpKeyAgreement": "true"]
         )
 
-        let peer = factory.peerConnection(with: config, constraints: constraints, delegate: self)
+        guard let peer = factory.peerConnection(with: config, constraints: constraints, delegate: self) else {
+            sendError("offer_failed", "创建 PeerConnection 失败")
+            return
+        }
         self.peer = peer
         _ = peer.setBweMinBitrateBps(NSNumber(value: 2_000_000), currentBitrateBps: NSNumber(value: 4_000_000), maxBitrateBps: NSNumber(value: 6_000_000))
         peer.add(track, streamIds: ["screen"])

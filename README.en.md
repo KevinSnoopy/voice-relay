@@ -26,7 +26,8 @@ VoiceRelay is two apps:
 
 | Platform | Package | Notes |
 |---|---|---|
-| macOS 13+ | [VoiceRelay-1.0.0.dmg](https://github.com/KevinSnoopy/voice-relay/releases/latest) | Intel build; runs on Apple Silicon via Rosetta |
+| macOS 13+ | [VoiceRelay-1.0.0-macos-arm64.dmg](https://github.com/KevinSnoopy/voice-relay/releases/latest) | Apple Silicon native (arm64) |
+| macOS 13+ | [VoiceRelay-1.0.0.dmg](https://github.com/KevinSnoopy/voice-relay/releases/latest) | Intel (x86_64); also runs on Apple Silicon via Rosetta |
 | Android 10+ | [VoiceRelay-1.0.0.apk](https://github.com/KevinSnoopy/voice-relay/releases/latest) | Universal APK, debug-signed, sideload |
 | iOS 15+ | Build from source | Requires Xcode and a signing team |
 
@@ -60,7 +61,7 @@ Requirements: macOS 13+, Xcode 15+, Swift 5.9; Flutter 3.38.x, Android SDK, JDK 
 
 ## Status & limitations
 
-- macOS build is x86_64 only. Native Apple Silicon support is a welcome contribution.
+- macOS ships as two separate packages, `arm64` (Apple Silicon native) and `x86_64` (Intel), not as a universal binary. The arm64 package links LiveKit's WebRTC build because Google publishes no macOS arm64 WebRTC binary.
 - Not notarized, not on any app store.
 - LAN-only; no relay, no accounts, no multi-device sync.
 - BLE fallback, screen viewing and iOS builds are implemented but not hardware-verified.
@@ -70,7 +71,7 @@ Requirements: macOS 13+, Xcode 15+, Swift 5.9; Flutter 3.38.x, Android SDK, JDK 
 
 Issues, docs fixes, translations, hardware reports and code are all welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), or pick a [`good first issue`](https://github.com/KevinSnoopy/voice-relay/labels/good%20first%20issue).
 
-Especially wanted: **Apple Silicon build**, **iOS device testing**, **BLE testing on more Android vendors**, and **Windows/Linux ports**.
+Especially wanted: **iOS device testing**, **BLE testing on more Android vendors**, **Windows/Linux ports**, and **universal (`arm64` + `x86_64`) packaging**.
 
 Security reports: see [SECURITY.md](SECURITY.md). This project follows the [Contributor Covenant 2.1](CODE_OF_CONDUCT.md).
 

@@ -14,3 +14,4 @@
 *.apk binary
 
 mac/vendor/WebRTC.xcframework/** binary
+mac/vendor/LiveKitWebRTC.xcframework/** binary

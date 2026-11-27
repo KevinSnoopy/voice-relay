@@ -3,6 +3,19 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 CONFIG="${1:-release}"
+ARCH="$(uname -m)"
+case "$ARCH" in
+  arm64)
+    SHERPA_DIR="vendor/sherpa-onnx-v2.0.3-osx-arm64-shared"
+    WEBRTC_DIR="vendor/LiveKitWebRTC.xcframework/macos-arm64"
+    WEBRTC_NAME="LiveKitWebRTC.framework"
+    ;;
+  *)
+    SHERPA_DIR="vendor/sherpa-onnx-v2.0.3-osx-x64-shared"
+    WEBRTC_DIR="vendor/WebRTC.xcframework/macos-x86_64"
+    WEBRTC_NAME="WebRTC.framework"
+    ;;
+esac
 VERSION="${VERSION:-1.0.0}"
 BUILD_NUMBER="${BUILD_NUMBER:-1}"
 echo "==> swift build -c $CONFIG"
@@ -20,10 +33,10 @@ for sub in ['Contents/MacOS', 'Contents/Frameworks', 'Contents/Resources']:
 PY
 
 cp "$BIN" "$APP/Contents/MacOS/VoiceRelay"
-cp vendor/sherpa-onnx-v2.0.3-osx-x64-shared/lib/libsherpa-onnx-c-api.dylib "$APP/Contents/Frameworks/"
-cp vendor/sherpa-onnx-v2.0.3-osx-x64-shared/lib/libonnxruntime.dylib "$APP/Contents/Frameworks/"
+cp "$SHERPA_DIR/lib/libsherpa-onnx-c-api.dylib" "$APP/Contents/Frameworks/"
+cp "$SHERPA_DIR/lib/libonnxruntime.dylib" "$APP/Contents/Frameworks/"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
-cp -R vendor/WebRTC.xcframework/macos-x86_64/WebRTC.framework "$APP/Contents/Frameworks/"
+cp -R "$WEBRTC_DIR/$WEBRTC_NAME" "$APP/Contents/Frameworks/$WEBRTC_NAME"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -54,6 +67,15 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/VoiceRelay" 2>/dev/null || true
+
+# SwiftPM bakes the absolute vendor directories into LC_RPATH; drop them so the
+# bundle loads the copies inside Contents/Frameworks instead of the source tree.
+otool -l "$APP/Contents/MacOS/VoiceRelay" |
+  awk '/LC_RPATH/ { getline; getline; sub(/^ *path /, ""); sub(/ .*/, ""); print }' |
+  grep '/vendor/' |
+  while read -r rpath; do
+    install_name_tool -delete_rpath "$rpath" "$APP/Contents/MacOS/VoiceRelay" 2>/dev/null || true
+  done
 IDENTITY="${CODESIGN_IDENTITY:-}"
 if [ -z "$IDENTITY" ]; then
   IDENTITY="$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(.*\)"/\1/p' | head -1)"

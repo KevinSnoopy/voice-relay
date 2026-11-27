@@ -19,7 +19,12 @@ export VERSION BUILD_NUMBER CODESIGN_IDENTITY
 
 APP="build/VoiceRelay.app"
 STAGE="build/dmg"
-DMG="build/VoiceRelay-${VERSION}.dmg"
+ARCH="$(uname -m)"
+if [ "$ARCH" = "arm64" ]; then
+  DMG="build/VoiceRelay-${VERSION}-macos-arm64.dmg"
+else
+  DMG="build/VoiceRelay-${VERSION}.dmg"
+fi
 
 rm -rf "$STAGE" "$DMG"
 mkdir -p "$STAGE"

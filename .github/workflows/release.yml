@@ -15,8 +15,16 @@ permissions:
 
 jobs:
   dmg:
-    name: macOS DMG
-    runs-on: macos-15-intel
+    name: macOS DMG (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15-intel
+            arch: x86_64
+          - runner: macos-15
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +38,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dmg
+          name: dmg-${{ matrix.arch }}
           path: mac/build/VoiceRelay-*.dmg
 
   apk:

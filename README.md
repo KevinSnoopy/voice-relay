@@ -28,7 +28,8 @@ VoiceRelay 由两部分组成：
 
 | 平台 | 安装包 | 说明 |
 |---|---|---|
-| macOS 13+ | [VoiceRelay-1.0.0.dmg](https://github.com/KevinSnoopy/voice-relay/releases/latest) | Intel 构建；Apple Silicon 可经 Rosetta 运行 |
+| macOS 13+ | [VoiceRelay-1.0.0-macos-arm64.dmg](https://github.com/KevinSnoopy/voice-relay/releases/latest) | Apple Silicon 原生（arm64） |
+| macOS 13+ | [VoiceRelay-1.0.0.dmg](https://github.com/KevinSnoopy/voice-relay/releases/latest) | Intel（x86_64）；Apple Silicon 也可经 Rosetta 运行 |
 | Android 10+ | [VoiceRelay-1.0.0.apk](https://github.com/KevinSnoopy/voice-relay/releases/latest) | 通用包，debug 签名，侧载安装 |
 | iOS 15+ | 暂无预编译包 | 用 Xcode 从源码构建，见[构建](#从源码构建) |
 
@@ -59,11 +60,11 @@ VoiceRelay 由两部分组成：
 | 后端 B（虚拟声卡 + 第三方输入法） | 🧪 代码完成，未做虚拟声卡验收 |
 | Android 手机端 | ✅ 协议/录音/发现/配对/主界面可用；APK 可安装 |
 | iOS 手机端 | 🧪 源码完整，未做真机验收 |
-| Apple Silicon 原生构建 | ⏳ 尚未支持，欢迎贡献 |
+| Apple Silicon 原生构建 | ✅ arm64 DMG，Intel 任务不再走 Rosetta |
 
 **已知限制**
 
-- 当前 macOS 安装包是 `x86_64`：Intel Mac 原生运行；Apple Silicon 通过 Rosetta 运行，识别速度会受影响。
+- 提供两个 macOS 安装包：`arm64`（Apple Silicon 原生）与 `x86_64`（Intel）。请按芯片下载，装错会被系统提示架构不匹配；arm64 包里的屏幕共享用 LiveKit 的 WebRTC 构建（官方 WebRTC 没有 macOS arm64 预编译包）。
 - 未公证、未上架；安装时需要手动放行。
 - 端口固定 `8787`，屏幕共享用 `8788`；同一网络下多台 Mac 需要改端口。
 - 只做局域网直连，不做跨互联网中继，不做多设备/账号体系。
@@ -103,7 +104,7 @@ VoiceRelay 由两部分组成：
 git clone https://github.com/KevinSnoopy/voice-relay.git
 cd voice-relay/mac
 
-./scripts/fetch-deps.sh          # 下载预编译 sherpa-onnx（约 23 MB）
+./scripts/fetch-deps.sh          # 下载预编译 sherpa-onnx（x64 + arm64，约 46 MB）
 swift build                      # 或 swift test 跑 15 个单元测试
 swift run voicerelayd --pairing-code 123456   # 无界面联调
 
@@ -113,8 +114,12 @@ swift run voicerelayd --pairing-code 123456   # 无界面联调
 打包 DMG：
 
 ```bash
-VERSION=1.0.0 ./scripts/package-dmg.sh   # 产物：build/VoiceRelay-1.0.0.dmg
+VERSION=1.0.0 ./scripts/package-dmg.sh
+# Apple Silicon 产物：build/VoiceRelay-1.0.0-macos-arm64.dmg
+# Intel 产物：        build/VoiceRelay-1.0.0.dmg
 ```
+
+在 Apple Silicon 上构建会链接 `vendor/opus-arm64` 与 `vendor/LiveKitWebRTC.xcframework`；在 Intel 上构建链接 `vendor/opus` 与 `vendor/WebRTC.xcframework`，脚本和 `Package.swift` 按 `uname -m` 自动选择。
 
 `package-dmg.sh` 默认 ad-hoc 签名。若你有 Apple Development / Developer ID 证书，可 `CODESIGN_IDENTITY="Developer ID Application: ..."` 覆盖；公证需要额外的 Apple 账号配置。
 
@@ -158,7 +163,6 @@ flutter test
 - 先读 [CONTRIBUTING.md](CONTRIBUTING.md)（环境、分支、测试、提交规范）。
 - 新手可以从 [`good first issue`](https://github.com/KevinSnoopy/voice-relay/labels/good%20first%20issue) 开始。
 - 特别需要帮忙的方向：
-  - **Apple Silicon 原生构建**（sherpa-onnx arm64 + WebRTC macOS arm64）
   - **iOS 真机与屏幕观看验收**
   - **BLE 硬件验收**（不同 Android 厂商）
   - **Windows/Linux 端**（协议和 Core 是跨平台的，UI 需要新写）
