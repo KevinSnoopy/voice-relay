@@ -2,6 +2,18 @@
 
 本项目从 v1.0.0 开始对外开源。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循语义化版本。
 
+## [Unreleased]
+
+### Added
+
+- Apple Silicon 原生（arm64）macOS 构建：`package-dmg.sh` 在 arm64 主机上产出 `VoiceRelay-1.0.0-macos-arm64.dmg`，不再依赖 Rosetta。
+- `fetch-deps.sh` 同时下载 x64 与 arm64 的 sherpa-onnx 运行时。
+
+### Changed
+
+- 屏幕共享在 arm64 构建上改用 LiveKit 维护的 WebRTC XCFramework（官方 WebRTC 没有 macOS arm64 预编译包），通过 `Sources/VoiceRelayApp/Screen/WebRTCCompat.swift` 抹平 `LK` 前缀差异。
+- `build-app.sh` 打包后清掉 `LC_RPATH` 里的构建目录，安装包总是加载 `Contents/Frameworks` 下的自带副本。
+
 ## [1.0.0] - 2026-11-27
 
 首个开源版本。
@@ -20,7 +32,7 @@
 
 ### Known limitations
 
-- macOS 安装包为 x86_64，Apple Silicon 需 Rosetta；原生 arm64 构建待贡献。
+- macOS 安装包分 `arm64` 与 `x86_64` 两份，不提供 universal 包。
 - 未做 Apple 公证；首次打开需手动放行。
 - BLE、Android 真机、iOS 真机、屏幕视频播放尚未完成硬件验收。
 - 后端 B（虚拟声卡 + 第三方输入法）未做虚拟声卡验收。

@@ -8,11 +8,12 @@ VoiceRelay 的**源代码**以 [MIT](LICENSE) 发布。下列第三方组件、�
 |---|---|---|---|
 | sherpa-onnx 2.0.3 | 本地语音识别运行时 | Apache-2.0 | <https://github.com/k2-fsa/sherpa-onnx> |
 | ONNX Runtime | 推理后端（随 sherpa-onnx 分发） | MIT | <https://github.com/microsoft/onnxruntime> |
-| WebRTC.framework | 屏幕共享推流/收流 | BSD-3-Clause | <https://webrtc.org/> |
+| WebRTC.framework (x86_64) | 屏幕共享推流/收流（Intel 构建） | BSD-3-Clause | <https://webrtc.org/> |
+| LiveKitWebRTC.xcframework (arm64) | 屏幕共享推流/收流（Apple Silicon 构建） | BSD-3-Clause | <https://github.com/livekit/webrtc-xcframework> |
 | Opus | 音频编码（协议预留） | BSD-3-Clause | <https://opus-codec.org/> |
 | Flutter / Dart | 手机端框架 | BSD-3-Clause | <https://flutter.dev> |
 
-WebRTC.xcframework 与 Opus 静态库为预编译二进制，位于 `mac/vendor/`；sherpa-onnx 运行时由 `mac/scripts/fetch-deps.sh` 在构建时下载，不进入仓库。二进制中的版权声明归其作者所有。
+WebRTC.xcframework、LiveKitWebRTC.xcframework（仅 macOS arm64 切片）与 Opus 静态库为预编译二进制，位于 `mac/vendor/`；sherpa-onnx 运行时由 `mac/scripts/fetch-deps.sh` 在构建时下载，不进入仓库。二进制中的版权声明归其作者所有。
 
 ## 手机端 Dart 依赖
 
