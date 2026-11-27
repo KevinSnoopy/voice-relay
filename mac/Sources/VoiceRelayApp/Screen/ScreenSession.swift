@@ -83,7 +83,7 @@ final class ScreenSession: NSObject, RTCPeerConnectionDelegate, SCStreamDelegate
             optionalConstraints: ["DtlsSrtpKeyAgreement": "true"]
         )
 
-        guard let peer = factory.peerConnection(with: config, constraints: constraints, delegate: self) else {
+        guard let peer = factory.makePeerConnection(with: config, constraints: constraints, delegate: self) else {
             sendError("offer_failed", "创建 PeerConnection 失败")
             return
         }
